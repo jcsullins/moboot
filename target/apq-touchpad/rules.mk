@@ -7,8 +7,9 @@ PLATFORM := apq-touchpad
 MEMBASE := 0x40208000 # kernel load address
 MEMSIZE := 0x00100000 # 1MB
 
-SCRATCH_ADDR := 0x90000000
-SCRATCH_SIZE := 128 #size in MB
+# from jonpry in #msm-bootloader thanks
+SCRATCH_ADDR := 0x70000000
+SCRATCH_SIZE := 1024 #size in MB
 
 KEYS_USE_GPIO_KEYPAD := 1
 
