@@ -2,7 +2,7 @@ LOCAL_DIR := $(GET_LOCAL_DIR)
 
 INCLUDES += -I$(LOCAL_DIR)/include -I$(LK_TOP_DIR)/platform/msm_shared
 
-PLATFORM := apq8064
+PLATFORM := apq-touchpad
 
 MEMBASE := 0x40208000 # kernel load address
 MEMSIZE := 0x00100000 # 1MB
