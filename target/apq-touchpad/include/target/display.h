@@ -28,7 +28,7 @@
  */
 #ifndef _TARGET_APQ_TOUCHPAD_DISPLAY_H
 
-#define LCDC_FB_ADDR  0x7F600000
+/* #define LCDC_FB_ADDR  0x7F600000 */
 
 #define TARGET_XRES 1024
 #define TARGET_YRES 600
