@@ -44,7 +44,11 @@
 #define LCDC_BASE     0xC0000
 #define LCDC_FB_ADDR  0x43E00000
 #elif PLATFORM_TOUCHPAD_APQ
+/* TODO: check these ! */
+#define MSM_MDP_BASE1 0x05100000
+#define LCDC_BASE     0xC0000
 #define LCDC_NO_OP 1
+#define LCDC_FB_ADDR      0x7F600000
 #else
 #define MSM_MDP_BASE1 0xAA200000
 #define LCDC_BASE     0xE0000
@@ -203,12 +207,30 @@ struct fbcon_config *lcdc_init_set( struct lcdc_timing_parameters *custom_timing
 	return &fb_cfg;
 }
 
+struct fbcon_config *lcdc_init_fixed(void)
+{
+	unsigned mdp_rgb_size;
+	mdp_rgb_size =  (fb_cfg.height <<16) + fb_cfg.width;
+
+	dprintf(INFO, "lcdc_init(): panel is %d x %d\n", fb_cfg.width, fb_cfg.height);
+#if PLATFORM_APQ_TOUCHPAD
+	fb_cfg.base = LCDC_FB_ADDR;
+#elif PLATFORM_MSM8X60
+	fb_cfg.base = LCDC_FB_ADDR;
+#else
+	fb_cfg.base =
+		memalign(4096, fb_cfg.width * fb_cfg.height * (fb_cfg.bpp / 8));
+#endif
+
+	return &fb_cfg;
+}
+
 struct fbcon_config *lcdc_init(void)
 {
 #ifndef LCDC_NO_OP
 	return lcdc_init_set( DEFAULT_LCD_TIMING );
 #else
-	return true;
+	return lcdc_init_fixed();
 #endif
 }
 
