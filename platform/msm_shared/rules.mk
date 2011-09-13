@@ -38,6 +38,12 @@ ifeq ($(PLATFORM),apq8064)
 			$(LOCAL_DIR)/uart_dm.o
 endif
 
+ifeq ($(PLATFORM),apq-touchpad)
+	OBJS += $(LOCAL_DIR)/qgic.o \
+			$(LOCAL_DIR)/uart_dm.o \
+			$(LOCAL_DIR)/lcdc.o
+endif
+
 ifeq ($(PLATFORM),msm8960)
 	OBJS += $(LOCAL_DIR)/mipi_dsi.o \
 			$(LOCAL_DIR)/i2c_qup.o \

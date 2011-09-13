@@ -2,7 +2,7 @@
 #
 LOCAL_DIR := $(GET_LOCAL_DIR)
 
-TARGET := apq8064
+TARGET := apq-touchpad
 
 MODULES += app/aboot
 
