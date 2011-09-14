@@ -54,11 +54,69 @@ static struct fbcon_config *config = NULL;
 #define FONT_WIDTH		5
 #define FONT_HEIGHT		12
 
+#if DISPLAY_TYPE_TOUCHPAD
+unsigned char		BGCOLOR_R;
+unsigned char		BGCOLOR_G;
+unsigned char		BGCOLOR_B;
+unsigned char		FGCOLOR_R;
+unsigned char		FGCOLOR_G;
+unsigned char		FGCOLOR_B;
+#else
 static uint16_t			BGCOLOR;
 static uint16_t			FGCOLOR;
+#endif
 
 static struct pos		cur_pos;
 static struct pos		max_pos;
+
+
+#if DISPLAY_TYPE_TOUCHPAD
+void fb_put_pixel(unsigned x, unsigned y, unsigned char red, unsigned char green, unsigned char blue)
+{
+	volatile void *fb_addr = (void *)0x7f600000;
+	unsigned int pixel_size = 4;
+	unsigned long line_size = 1024*pixel_size;
+	volatile void *pixel_loc;
+
+	if (x >= 1024) return;
+	if (y >= 768) return;
+
+	pixel_loc = fb_addr + y * line_size + x * pixel_size;
+	*((unsigned char *)(pixel_loc + 0)) = blue; // blue
+	*((unsigned char *)(pixel_loc + 1)) = green; // grn
+	*((unsigned char *)(pixel_loc + 2)) = red; // red
+	*((unsigned char *)(pixel_loc + 3)) = 0; // ??
+}
+
+static void fbcon_drawglyph_tp(unsigned x, unsigned y, unsigned *glyph)
+{
+	unsigned xd, yd, data;
+
+	data = glyph[0];
+	for (yd = 0; yd < (FONT_HEIGHT / 2); ++yd) {
+		for (xd = 0; xd < FONT_WIDTH; ++xd) {
+			if (data & 1) {
+				fb_put_pixel(x+xd, y+yd, FGCOLOR_R, FGCOLOR_G, FGCOLOR_B);
+			} else {
+				fb_put_pixel(x+xd, y+yd, BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
+			}
+			data >>= 1;
+		}
+	}
+
+	data = glyph[1];
+	for (yd = 0; yd < (FONT_HEIGHT / 2); yd++) {
+		for (xd = 0; xd < FONT_WIDTH; xd++) {
+			if (data & 1) {
+				fb_put_pixel(x+xd, y+yd+(FONT_HEIGHT/2), FGCOLOR_R, FGCOLOR_G, FGCOLOR_B);
+			} else {
+				fb_put_pixel(x+xd, y+yd+(FONT_HEIGHT/2), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
+			}
+			data >>= 1;
+		}
+	}
+}
+#endif
 
 static void fbcon_drawglyph(uint16_t *pixels, uint16_t paint, unsigned stride,
 			    unsigned *glyph)
@@ -100,6 +158,16 @@ static void fbcon_flush(void)
 /* TODO: Take stride into account */
 static void fbcon_scroll_up(void)
 {
+#if DISPLAY_TYPE_TOUCHPAD
+	for (unsigned y = 0; y <= max_pos.y - FONT_HEIGHT; y += FONT_HEIGHT) {
+            memcpy (config->base + y * 1024*4,
+					config->base + (y + FONT_HEIGHT) * 1024*4,
+					1024*4*FONT_HEIGHT);
+	}
+	for (unsigned y = max_pos.y; y < config->height; y++) {
+		memset(config->base + y*1024*4, 0, 1024*4);
+	}
+#else
 	unsigned short *dst = config->base;
 	unsigned short *src = dst + (config->width * FONT_HEIGHT);
 	unsigned count = config->width * (config->height - FONT_HEIGHT);
@@ -113,22 +181,47 @@ static void fbcon_scroll_up(void)
 		*dst++ = BGCOLOR;
 	}
 
+#endif
 	fbcon_flush();
 }
 
 /* TODO: take stride into account */
 void fbcon_clear(void)
 {
+#if DISPLAY_TYPE_TOUCHPAD
+	for (unsigned y = 0; y < 1024; y++) {
+		memset(config->base + y*1024*4, 0, 1024*4);
+	}
+#else
 	unsigned count = config->width * config->height;
 	memset(config->base, BGCOLOR, count * ((config->bpp) / 8));
+#endif
 }
 
-
+#if DISPLAY_TYPE_TOUCHPAD
+static void fbcon_set_colors(
+		unsigned char bg_r,
+		unsigned char bg_g,
+		unsigned char bg_b,
+		unsigned char fg_r,
+		unsigned char fg_g,
+		unsigned char fg_b
+		)
+{
+	BGCOLOR_R = bg_r;
+	BGCOLOR_G = bg_g;
+	BGCOLOR_B = bg_b;
+	FGCOLOR_R = fg_r;
+	FGCOLOR_G = fg_g;
+	FGCOLOR_B = fg_b;
+}
+#else
 static void fbcon_set_colors(unsigned bg, unsigned fg)
 {
 	BGCOLOR = bg;
 	FGCOLOR = fg;
 }
+#endif
 
 void fbcon_putc(char c)
 {
@@ -148,6 +241,23 @@ void fbcon_putc(char c)
 		return;
 	}
 
+#if DISPLAY_TYPE_TOUCHPAD
+	fbcon_drawglyph_tp(cur_pos.x, cur_pos.y,
+			font5x12 + (c - 32) * 2);
+
+	cur_pos.x += FONT_WIDTH + 1;
+	if (cur_pos.x <= max_pos.x)
+		return;
+
+newline:
+	cur_pos.y += FONT_HEIGHT;
+	cur_pos.x = 0;
+	if(cur_pos.y > max_pos.y) {
+		cur_pos.y -= FONT_HEIGHT;
+		fbcon_scroll_up();
+	} else
+		fbcon_flush();
+#else
 	pixels = config->base;
 	pixels += cur_pos.y * FONT_HEIGHT * config->width;
 	pixels += cur_pos.x * (FONT_WIDTH + 1);
@@ -166,6 +276,7 @@ newline:
 		fbcon_scroll_up();
 	} else
 		fbcon_flush();
+#endif
 }
 
 void fbcon_setup(struct fbcon_config *_config)
@@ -192,12 +303,21 @@ void fbcon_setup(struct fbcon_config *_config)
 		break;
 	}
 
+#if DISPLAY_TYPE_TOUCHPAD
+	fbcon_set_colors(0, 0, 0, 0, 0, 255);
+#else
 	fbcon_set_colors(bg, fg);
+#endif
 
 	cur_pos.x = 0;
 	cur_pos.y = 0;
+#if DISPLAY_TYPE_TOUCHPAD
+	max_pos.x = config->width - FONT_WIDTH;
+	max_pos.y = config->height - FONT_HEIGHT;
+#else
 	max_pos.x = config->width / (FONT_WIDTH+1);
 	max_pos.y = (config->height - 1) / FONT_HEIGHT;
+#endif
 #if !DISPLAY_SPLASH_SCREEN
 	fbcon_clear();
 #endif
@@ -234,6 +354,9 @@ void display_image_on_screen(void)
         mipi_dsi_cmd_mode_trigger();
 #endif
 
+#elif DISPLAY_TYPE_TOUCHPAD
+	/* not supported yet */
+	return;
 #else
     if (bytes_per_bpp == 2)
     {
@@ -247,3 +370,4 @@ void display_image_on_screen(void)
     fbcon_flush();
 #endif
 }
+

@@ -36,6 +36,7 @@
 #include <mmu.h>
 #include <qgic.h>
 #include <arch/arm/mmu.h>
+#include <dev/fbcon.h>
 
 extern void platform_init_timer(void);
 extern uint8_t target_uart_gsbi(void);
@@ -113,3 +114,23 @@ uint32_t platform_tick_rate(void)
 {
 	return ticks_per_sec;
 }
+
+void display_init(void)
+{
+	static struct fbcon_config fb_cfg = {
+		.base = (void *)0x7f600000, 
+		.height = 768,
+		.width = 1024,
+		/* stride, format, bpp NOT USED for DISPLAY_TYPE_TOUCHPAD */
+		.stride = 4,                /* not used */
+		.format = FB_FORMAT_RGB888, /* not used */
+		.bpp = 24,                  /* not used */
+		.update_start = NULL,
+		.update_done = NULL,
+	};
+
+
+    fbcon_setup(&fb_cfg);
+    fbcon_clear();
+}
+

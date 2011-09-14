@@ -45,6 +45,7 @@
 extern unsigned int mmc_boot_main(unsigned char slot, unsigned int base);
 extern void mdelay(unsigned msecs);
 extern void keypad_init(void);
+extern void display_init(void);
 
 static unsigned mmc_sdc_base[] =
 {
@@ -72,6 +73,9 @@ void target_init(void)
 	/* Keypad init */
 	keys_init();
 	keypad_init();
+
+	/* fbcon */
+	display_init();
 
 	/* Trying Slot 1 first */
 	slot = 1;

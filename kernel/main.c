@@ -64,6 +64,11 @@ static void call_constructors(void)
 void kmain(void) __NO_RETURN __EXTERNALLY_VISIBLE;
 void kmain(void)
 {
+
+#if DISPLAY_TYPE_TOUCHPAD
+	display_init();
+#endif
+
 	// get us into some sort of thread context
 	thread_init_early();
 
@@ -77,7 +82,7 @@ void kmain(void)
 	target_early_init();
 
 	dprintf(INFO, "welcome to lk\n\n");
-	
+
 	// deal with any static constructors
 	dprintf(SPEW, "calling constructors\n");
 	call_constructors();
