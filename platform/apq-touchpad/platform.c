@@ -62,7 +62,9 @@ mmu_section_t mmu_section_table[] = {
 
 void platform_early_init(void)
 {
+#if 0 /* disabled */
 	uart_init(target_uart_gsbi());
+#endif
 	qgic_init();
 	platform_init_timer();
 }
