@@ -117,6 +117,7 @@ uint32_t platform_tick_rate(void)
 
 void display_init(void)
 {
+	static int runonce = 0;
 	static struct fbcon_config fb_cfg = {
 		.base = (void *)0x7f600000, 
 		.height = 768,
@@ -130,7 +131,11 @@ void display_init(void)
 	};
 
 
+    if (runonce == 1)
+        return;
+    else
+        runonce = 1;
+
     fbcon_setup(&fb_cfg);
-    fbcon_clear();
 }
 
