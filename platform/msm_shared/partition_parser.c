@@ -181,8 +181,10 @@ unsigned int mmc_boot_read_mbr( struct mmc_boot_host * mmc_host,
             break;
         }
         /* More EBR to follow - read in the next EBR sector */
+#ifndef DISABLE_MMC_DEBUG_SPEW
         dprintf(SPEW, "Reading EBR block from 0x%X\n", EBR_first_sec
                                                           + dfirstsec);
+#endif
         ret = mmc_boot_read_from_card( mmc_host, mmc_card, \
                                        ((EBR_first_sec + dfirstsec) * 512), \
                                        MMC_BOOT_RD_BLOCK_LEN, \

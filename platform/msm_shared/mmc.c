@@ -132,7 +132,9 @@ static unsigned int mmc_boot_set_read_timeout( struct mmc_boot_host* host,
         return MMC_BOOT_E_NOT_SUPPORTED;
     }
 
+#ifndef DISABLE_MMC_DEBUG_SPEW
     dprintf(SPEW, " Read timeout set: %d ns\n", card->rd_timeout_ns );
+#endif
 
     return MMC_BOOT_E_SUCCESS;
 }
@@ -165,7 +167,9 @@ static unsigned int mmc_boot_set_write_timeout( struct mmc_boot_host* host,
         return MMC_BOOT_E_NOT_SUPPORTED;
     }
 
+#ifndef DISABLE_MMC_DEBUG_SPEW
     dprintf(SPEW, " Write timeout set: %d ns\n", card->wr_timeout_ns );
+#endif
 
     return MMC_BOOT_E_SUCCESS;
 }
@@ -337,6 +341,7 @@ static unsigned int mmc_boot_decode_and_save_csd( struct mmc_boot_card* card,
     memcpy( (struct mmc_boot_csd *)&card->csd, (struct mmc_boot_csd *)&mmc_csd,
             sizeof(struct mmc_boot_csd) );
 
+#ifndef DISABLE_MMC_DEBUG_SPEW
     dprintf(SPEW,  "Decoded CSD fields:\n" );
     dprintf(SPEW,  "cmmc_structure: %d\n", mmc_csd.cmmc_structure );
     dprintf(SPEW, "card_cmd_class: %x\n", mmc_csd.card_cmd_class );
@@ -355,6 +360,7 @@ static unsigned int mmc_boot_decode_and_save_csd( struct mmc_boot_card* card,
     dprintf(SPEW, "read_blk_partial: %d\n", mmc_csd.read_blk_partial );
     dprintf(SPEW, "write_blk_partial: %d\n", mmc_csd.write_blk_partial );
     dprintf(SPEW, "Card Capacity: %llu Bytes\n", card->capacity );
+#endif
 
     return MMC_BOOT_E_SUCCESS;
 }
@@ -503,8 +509,10 @@ static unsigned int mmc_boot_send_command( struct mmc_boot_command* cmd )
     /* 2k. Write to MMC_BOOT_MCI_CMD register */
     writel( mmc_cmd, MMC_BOOT_MCI_CMD );
 
+#ifndef DISABLE_MMC_DEBUG_SPEW
     dprintf(SPEW, "Command sent: CMD%d MCI_CMD_REG:%x MCI_ARG:%x\n",
             cmd_index, mmc_cmd, cmd->argument );
+#endif
 
     /* 3. Wait for interrupt or poll on the following bits of MCI_STATUS
        register */
@@ -572,7 +580,9 @@ static unsigned int mmc_boot_send_command( struct mmc_boot_command* cmd )
                 mmc_return = MMC_BOOT_E_CMD_INDX_MISMATCH;
             }
 
+#ifndef DISABLE_MMC_DEBUG_SPEW
             dprintf(SPEW, "Command response received: %X\n", cmd->resp[0] );
+#endif
             break;
         }
 
@@ -2223,8 +2233,10 @@ unsigned int mmc_boot_main(unsigned char slot, unsigned int base)
         return MMC_BOOT_E_FAILURE;
     }
 
+#ifndef DISABLE_MMC_DEBUG_SPEW
     mmc_display_csd();
     mmc_display_ext_csd();
+#endif
 
     mmc_ret = partition_read_table(&mmc_host, &mmc_card);
     return mmc_ret;
