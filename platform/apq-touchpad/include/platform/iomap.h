@@ -63,11 +63,11 @@
 #define MSM_BOOT_PLL_ENABLE_SC0 (CLK_CTL_BASE + 0x34C0)
 
 /* GIC */
-#define MSM_GIC_DIST_BASE        0x02000000
-#define MSM_GIC_CPU_BASE         0x02002000
+#define MSM_GIC_DIST_BASE        0x02080000
+#define MSM_GIC_CPU_BASE         0x02081000
 
 /* TMR */
-#define MSM_TMR_BASE             0x0200A000
+#define MSM_TMR_BASE             0x02000000
 #define MSM_GPT_BASE            (MSM_TMR_BASE + 0x04)
 #define MSM_DGT_BASE            (MSM_TMR_BASE + 0x24)
 #define MSM_WDT0_RST            (MSM_TMR_BASE + 0x38)
