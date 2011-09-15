@@ -43,11 +43,7 @@ extern "C" {
 #define CRITICAL 0
 #define ALWAYS 0
 #define INFO 1
-/* NOTE: TODO TEMPORARY - adjust SPEW from 2 to 1 */
-/* NOTE: TODO TEMPORARY - to get more debug output */
-/* NOTE: TODO TEMPORARY - since setting DEBUG to 2 now */
-/* NOTE: TODO TEMPORARY - breaks things elsewhere */
-#define SPEW 1
+#define SPEW 2
 
 /* output */
 void _dputc(char c); // XXX for now, platform implements
