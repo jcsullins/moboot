@@ -104,8 +104,10 @@ void platform_uninit_timer(void)
 
 void mdelay(unsigned msecs)
 {
+  unsigned enableval;
   msecs *= 33;
 
+  enableval = readl(GPT_ENABLE); 
   writel(0, GPT_CLEAR);
   writel(0, GPT_ENABLE);
   while(readl(GPT_COUNT_VAL) != 0) ;
@@ -113,14 +115,16 @@ void mdelay(unsigned msecs)
   writel(GPT_ENABLE_EN, GPT_ENABLE);
   while(readl(GPT_COUNT_VAL) < msecs) ;
 
-  writel(0, GPT_ENABLE);
+  writel(enableval, GPT_ENABLE);
   writel(0, GPT_CLEAR);
 }
 
 void udelay(unsigned usecs)
 {
+    unsigned enableval;
     usecs = (usecs * 33 + 1000 - 33) / 1000;
 
+    enableval = readl(GPT_ENABLE); 
     writel(0, GPT_CLEAR);
     writel(0, GPT_ENABLE);
     while(readl(GPT_COUNT_VAL) != 0);
@@ -128,7 +132,7 @@ void udelay(unsigned usecs)
     writel(GPT_ENABLE_EN, GPT_ENABLE);
     while(readl(GPT_COUNT_VAL) < usecs);
 
-    writel(0, GPT_ENABLE);
+    writel(enableval, GPT_ENABLE);
     writel(0, GPT_CLEAR);
 }
 
