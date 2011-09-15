@@ -141,9 +141,12 @@ thread_t *thread_create(const char *name, thread_start_routine entry, void *arg,
 {
 	thread_t *t;
 
+	dprintf(SPEW, "thread_create(): name='%s'\n", name);
 	t = malloc(sizeof(thread_t));
-	if (!t)
+	if (!t) {
+		dprintf(CRITICAL, "thread_create(): unable to malloc\n");
 		return NULL;
+	}
 
 	init_thread_struct(t, name);
 
@@ -159,6 +162,7 @@ thread_t *thread_create(const char *name, thread_start_routine entry, void *arg,
 	t->stack = malloc(stack_size);
 	if (!t->stack) {
 		free(t);
+		dprintf(CRITICAL, "thread_create(): no stack\n");
 		return NULL;
 	}
 
@@ -247,7 +251,7 @@ void thread_exit(int retcode)
 	ASSERT(current_thread->state == THREAD_RUNNING);
 #endif
 
-//	dprintf("thread_exit: current %p\n", current_thread);
+	dprintf(SPEW, "thread_exit: current %p name='%s'\n", current_thread, current_thread->name);
 
 	enter_critical_section();
 
