@@ -111,7 +111,9 @@ void fastboot_publish(const char *name, const char *value)
 
 static event_t usb_online;
 static event_t txn_done;
-static unsigned char buffer[4096];
+static unsigned char inbuffer[4096];
+static unsigned char outbuffer[4096];
+static unsigned char cmdbuffer[4096];
 static struct udc_endpoint *in, *out;
 static struct udc_request *req;
 int txn_status;
@@ -286,30 +288,87 @@ static void cmd_download(const char *arg, void *data, unsigned sz)
 static void fastboot_command_loop(void)
 {
 	struct fastboot_cmd *cmd;
+	unsigned cmdlen = 0;
+	unsigned outlen = 0;
+	unsigned showprompt = 1;
+	unsigned cmdready = 0;
+	char prompt[] = "fastboot: ";
 	int r;
 	dprintf(INFO,"fastboot: processing commands\n");
 
 again:
+	cmdbuffer[0] = 0;
+	cmdlen = 0;
+	cmdready = 0;
 	while (fastboot_state != STATE_ERROR) {
-		r = usb_read(buffer, MAX_RSP_SIZE);
+		if (showprompt == 1) {
+			showprompt = 0;
+			r = usb_write(prompt, strlen(prompt));
+			if (r <0) goto fail;
+		}
+		r = usb_read(inbuffer, MAX_RSP_SIZE);
 		if (r < 0) break;
-		buffer[r] = 0;
-		dprintf(INFO,"fastboot: %s\n", buffer);
 
-		for (cmd = cmdlist; cmd; cmd = cmd->next) {
-			if (memcmp(buffer, cmd->prefix, cmd->prefix_len))
-				continue;
-			fastboot_state = STATE_COMMAND;
-			cmd->handle((const char*) buffer + cmd->prefix_len,
-				    (void*) download_base, download_size);
-			if (fastboot_state == STATE_COMMAND)
-				fastboot_fail("unknown reason");
-			goto again;
+		outlen = 0;
+		for (unsigned i = 0; i < r; i++) {
+			if (inbuffer[i] == '\b') {
+				if (cmdlen > 0) {
+					outbuffer[outlen++] = '\b';
+					outbuffer[outlen++] = ' ';
+					outbuffer[outlen++] = '\b';
+					cmdlen--;
+				}
+			} else if (inbuffer[i] == '\003') {
+				outbuffer[outlen++] = '^';
+				outbuffer[outlen++] = 'C';
+				outbuffer[outlen++] = '\r';
+				outbuffer[outlen++] = '\n';
+				cmdlen = 0;
+				showprompt = 1;
+			} else if (inbuffer[i] == '\r') {
+				outbuffer[outlen++] = '\r';
+				outbuffer[outlen++] = '\n';
+				cmdbuffer[cmdlen++] = 0;
+				/*
+				for (unsigned j = 0; (i + j) < r; j++) {
+					cmdbuffer[cmdlen++] = inbuffer[i+j];
+				}
+				*/
+				cmdready = 1;
+			} else {
+				cmdbuffer[cmdlen++] = inbuffer[i];
+				outbuffer[outlen++] = inbuffer[i];
+			}
 		}
 
-		fastboot_fail("unknown command");
-			
+		if (outlen > 0) {
+			outbuffer[outlen] = 0;
+			r = usb_write(outbuffer, strlen(outbuffer));
+			if (r <0) break;
+		}
+
+		if (cmdready) showprompt = 1;
+
+		if (cmdready && cmdlen > 0) {
+			dprintf(INFO, "CMD: %s\n", cmdbuffer);
+			for (cmd = cmdlist; cmd; cmd = cmd->next) {
+				if (memcmp(cmdbuffer, cmd->prefix, cmd->prefix_len))
+					continue;
+				fastboot_state = STATE_COMMAND;
+				cmd->handle((const char*) cmdbuffer + cmd->prefix_len,
+						(void*) download_base, download_size);
+				if (fastboot_state == STATE_COMMAND) {
+					dprintf(ALWAYS, "unknown failure\n");
+					// fastboot_fail("unknown reason");
+				}
+				goto again;
+			}
+			dprintf(ALWAYS, "unknown command\n");
+			// fastboot_fail("unknown command");
+			goto again;
+		}
 	}
+fail:
 	fastboot_state = STATE_OFFLINE;
 	dprintf(INFO,"fastboot: oops!\n");
 }
