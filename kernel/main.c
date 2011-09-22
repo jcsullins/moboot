@@ -61,8 +61,13 @@ static void call_constructors(void)
 }
 
 /* called from crt0.S */
+#ifdef HANDLE_LINUX_KERNEL_ARGS
+void kmain(unsigned, unsigned, unsigned *) __NO_RETURN __EXTERNALLY_VISIBLE;
+void kmain(unsigned zero_arg, unsigned mach_type, unsigned *atags_ptr)
+#else
 void kmain(void) __NO_RETURN __EXTERNALLY_VISIBLE;
 void kmain(void)
+#endif
 {
 
 #if DISPLAY_TYPE_TOUCHPAD

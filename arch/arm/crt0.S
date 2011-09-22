@@ -37,6 +37,12 @@ _start:
 	b	arm_fiq
 
 reset:
+#ifdef HANDLE_LINUX_KERNEL_ARGS
+	/* save (possible) linux kernel args to pass to kmain */
+	mov	r8,	r0
+	mov	r9,	r1
+	mov	r10,	r2
+#endif
 
 #ifdef ENABLE_TRUSTZONE
 	/*Add reference to TZ symbol so linker includes it in final image */
@@ -170,6 +176,13 @@ warm_boot_tag:
 #ifdef ARM_CPU_CORTEX_A8
 	DSB
 	ISB
+#endif
+
+#ifdef HANDLE_LINUX_KERNEL_ARGS
+	/* pass (possible) linux kernel args to kmain */
+	mov	r0, r8
+	mov	r1, r9
+	mov	r2, r10
 #endif
 
 	bl		kmain
