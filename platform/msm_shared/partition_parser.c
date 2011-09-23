@@ -488,3 +488,9 @@ unsigned int partition_get_type(unsigned size, unsigned char* partition,
     }
     return ret;
 }
+
+unsigned partition_get_count()
+{
+	return partition_count;
+}
+

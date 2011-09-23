@@ -139,3 +139,5 @@ unsigned int partition_read_table( struct mmc_boot_host * mmc_host,
                                    struct mmc_boot_card * mmc_card);
 /* For Debugging */
 void partition_dump(void);
+
+unsigned partition_get_count(void);
