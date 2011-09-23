@@ -138,8 +138,27 @@ uint32_t board_machtype(void)
 
 void reboot_device(uint32_t reboot_reason)
 {
-	/* TODO: Not implemented yet. */
-	ASSERT(0);
+
+	/* TBD - set download mode? */
+	
+	pm8058_reset_pwr_off(1);
+
+	writel(reboot_reason, RESTART_REASON_ADDR);
+	dmb();
+
+	writel(0, MSM_WDT0_EN);
+	writel(0, PSHOLD_CTL_SU);
+	mdelay(5000);
+
+	writel(0x31F3, MSM_WDT0_BARK_TIME);
+	writel(0x31F3, MSM_WDT0_BITE_TIME);
+	writel(3, MSM_WDT0_EN);
+	dmb();
+
+	secure_writel(3, MSM_TCSR_WDOG_CFG);
+	mdelay(10000);
+
+	dprintf(CRITICAL, "Shutdown failed\n");
 }
 
 uint32_t check_reboot_mode(void)
