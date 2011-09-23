@@ -28,15 +28,15 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _PLATFORM_APQ8064_IOMAP_H_
-#define _PLATFORM_APQ8064_IOMAP_H_
+#ifndef _PLATFORM_APQ_TOUCHPAD_IOMAP_H_
+#define _PLATFORM_APQ_TOUCHPAD_IOMAP_H_
 
 #define MSM_IOMAP_BASE      0x00100000
 #define MSM_IOMAP_END       0x28000000
 
 /* Shared memory */
 #define MSM_SHARED_BASE       0x80000000
-#define MSM_SHARED_IMEM_BASE  0x2A03F000
+#define MSM_SHARED_IMEM_BASE	0x2A05F000
 #define RESTART_REASON_ADDR  (MSM_SHARED_IMEM_BASE + 0x65C)
 
 /* Peripherals */
@@ -72,8 +72,10 @@
 #define MSM_DGT_BASE            (MSM_TMR_BASE + 0x24)
 #define MSM_WDT0_RST            (MSM_TMR_BASE + 0x38)
 #define MSM_WDT0_EN             (MSM_TMR_BASE + 0x40)
-#define MSM_WDT0_BT             (MSM_TMR_BASE + 0x4C)
+#define MSM_WDT0_BARK_TIME             (MSM_TMR_BASE + 0x4C)
+#define MSM_WDT0_BITE_TIME             (MSM_TMR_BASE + 0x5C)
 #define SPSS_TIMER_STATUS       (MSM_TMR_BASE + 0x88)
+
 
 #define GPT_REG(off)            (MSM_GPT_BASE + (off))
 #define DGT_REG(off)            (MSM_DGT_BASE + (off))
@@ -105,5 +107,12 @@
                                              (0x1A000000 + (((id)-8) << 20)))
 #define GSBI_UART_DM_BASE(id)   (GSBI_BASE(id) + 0x40000)
 #define QUP_BASE(id)            (GSBI_BASE(id) + 0x80000)
+
+
+/* MMSS CLK CTR base address, size */
+#define MSM_MMSS_CLK_CTL_BASE 0x04000000
+#define MSM_TCSR_SIZE   4096
+
+#define PSHOLD_CTL_SU (TLMM_BASE_ADDR + 0x820)
 
 #endif
