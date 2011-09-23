@@ -32,6 +32,7 @@
 #include <kernel/thread.h>
 #include <kernel/event.h>
 #include <dev/udc.h>
+#include <target/gpiokeys.h>
 
 #define MAX_RSP_SIZE 64
 
@@ -285,6 +286,18 @@ static void cmd_download(const char *arg, void *data, unsigned sz)
 	fastboot_okay("");
 }
 
+static void cmd_getkeys(const char *arg, void *data, unsigned sz)
+{
+	int res = gpiokeys_poll(KEY_ALL);
+
+	dprintf(ALWAYS, "KEYS: VolUp: %u VolDn: %u Center: %u\n", 
+			(res & KEY_UP) ? 1 : 0,
+			(res & KEY_DOWN) ? 1 : 0,
+			(res & KEY_SELECT) ? 1 : 0);
+
+	fastboot_state = STATE_COMPLETE;
+}
+
 static void fastboot_command_loop(void)
 {
 	struct fastboot_cmd *cmd;
@@ -429,6 +442,7 @@ int fastboot_init(void *base, unsigned size)
 	if (udc_register_gadget(&fastboot_gadget))
 		goto fail_udc_register;
 
+	fastboot_register("getkeys:", cmd_getkeys);
 	fastboot_register("getvar:", cmd_getvar);
 	fastboot_register("download:", cmd_download);
 	fastboot_publish("version", "0.5");
