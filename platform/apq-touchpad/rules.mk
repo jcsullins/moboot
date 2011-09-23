@@ -15,6 +15,8 @@ OBJS += \
 	$(LOCAL_DIR)/platform.o \
 	$(LOCAL_DIR)/clock.o \
 	$(LOCAL_DIR)/gpio.o \
+	$(LOCAL_DIR)/scm-io.o \
+	$(LOCAL_DIR)/pmic.o \
 
 LINKER_SCRIPT += $(BUILDDIR)/system-onesegment.ld
 
