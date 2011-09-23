@@ -27,28 +27,19 @@
  */
 #include <sys/types.h>
 
-#define SIZE_1M                (1024*1024)
-#define SIZE_141M              (141*SIZE_1M)
-
-#define KERNEL_MEM_ADDR_1       0x80200000
-
 uint32_t* target_atag_mem(uint32_t* ptr)
 {
 	/* ATAG_MEM */
 	*ptr++ = 4;
 	*ptr++ = 0x54410002;
-	*ptr++ = SIZE_141M;
-	*ptr++ = KERNEL_MEM_ADDR_1;
+	*ptr++ = 0x06500000;
+	*ptr++ = 0x40200000;
+
+	*ptr++ = 4;
+	*ptr++ = 0x54410002;
+	*ptr++ = 0x37600000;
+	*ptr++ = 0x48000000;
 
 	return ptr;
 }
 
-void *target_get_scratch_address(void)
-{
-	return((void *)KERNEL_MEM_ADDR_1);
-}
-
-uint32_t target_get_max_flash_size(void)
-{
-	return (SIZE_141M);
-}
