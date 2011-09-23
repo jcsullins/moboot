@@ -34,6 +34,10 @@
 #include <partition_parser.h>
 #include <platform/iomap.h>
 #include <platform/timer.h>
+#if WITH_LIB_BIO
+#include <lib/bio.h>
+#endif
+#include <err.h>
 
 #if MMC_BOOT_ADM
 #include "adm.h"
@@ -46,6 +50,11 @@
 #define MMC_BOOT_DATA_READ     0
 #define MMC_BOOT_DATA_WRITE    1
 
+#if WITH_LIB_BIO
+static bdev_t bio_dev;
+ssize_t mmc_bio_read_block(struct bdev *dev, const void *buf, bnum_t block, uint count);
+ssize_t mmc_bio_write_block(struct bdev *dev, const void *buf, bnum_t block, uint count);
+#endif
 
 static unsigned int mmc_boot_fifo_data_transfer(unsigned int* data_ptr,
                                                 unsigned int  data_len,
@@ -2239,6 +2248,33 @@ unsigned int mmc_boot_main(unsigned char slot, unsigned int base)
 #endif
 
     mmc_ret = partition_read_table(&mmc_host, &mmc_card);
+
+#if WITH_LIB_BIO
+    bio_initialize_bdev(&bio_dev, "/dev/mmcblk0", 512, mmc_card.capacity / 512);
+
+    bio_dev.read_block = &mmc_bio_read_block;
+    bio_dev.write_block = &mmc_bio_write_block;
+
+    bio_register_device(&bio_dev);
+
+    if (mmc_ret == MMC_BOOT_E_SUCCESS) {
+        unsigned rv, i, offset, size;
+        char mmc_bio_name[32];
+        for (i=0; i < partition_get_count(); i++){
+            sprintf(mmc_bio_name, "/dev/mmcblk0p%u", i + 1);
+            offset = partition_get_offset(i) / 512;
+            size = partition_get_size(i);
+    
+            rv = bio_publish_subdevice("/dev/mmcblk0", mmc_bio_name,
+                        offset, size);
+            if (rv != 0) {
+                dprintf(ALWAYS, "Error initializing bio dev '%s' rc=%d\n", 
+                        mmc_bio_name, rv);
+            }
+        }
+    }
+#endif
+
     return mmc_ret;
 }
 
@@ -2426,6 +2462,28 @@ unsigned int mmc_read (unsigned long long data_addr, unsigned int* out, unsigned
     val = mmc_boot_read_from_card( &mmc_host, &mmc_card, data_addr, data_len, out);
     return val;
 }
+
+#if WITH_LIB_BIO
+ssize_t mmc_bio_read_block(struct bdev *dev, const void *buf, bnum_t block, uint count)
+{
+    unsigned int mmc_ret;
+    ASSERT(dev);
+
+    mmc_ret = mmc_read(block * dev->block_size,
+            (unsigned int*)buf, count * dev->block_size);
+
+    if (mmc_ret == MMC_BOOT_E_SUCCESS) {
+        return count * dev->block_size;
+    } else {
+        return ERR_IO;
+    }
+}
+
+ssize_t mmc_bio_write_block(struct bdev *dev, const void *buf, bnum_t block, uint count)
+{
+    return ERR_IO;
+}
+#endif
 
 /*
  * Function to read registers from MMC or SD card
