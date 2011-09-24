@@ -85,12 +85,16 @@ status_t bio_publish_subdevice(const char *parent_dev, const char *subdev, bnum_
 	LTRACEF("parent %s, sub %s, startblock %u, len %zd\n", parent_dev, subdev, startblock, len);
 
 	bdev_t *parent = bio_open(parent_dev);
-	if (!parent)
+	if (!parent) {
+		dprintf(ALWAYS, "bio_publish_subdevice(): bio_open() failed: parent %s, sub %s\n", parent_dev, subdev);
 		return -1;
+	}
 
 	/* make sure we're able to do this */
-	if (startblock + len > parent->block_count)
+	if (startblock + (len/(parent->block_size)) > parent->block_count)  {
+		dprintf(ALWAYS, "bio_publish_subdevice(): failed bounds check: parent %s, sub %s, startblock %u, len %zd, parent_blk_count %zd\n", parent_dev, subdev, startblock, len, parent->block_count);
 		return -1;
+	}
 
 	subdev_t *sub = malloc(sizeof(subdev_t));
 	bio_initialize_bdev(&sub->dev, subdev, parent->block_size, len);
