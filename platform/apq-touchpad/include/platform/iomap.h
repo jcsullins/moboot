@@ -111,8 +111,9 @@
 
 /* MMSS CLK CTR base address, size */
 #define MSM_MMSS_CLK_CTL_BASE 0x04000000
-#define MSM_TCSR_SIZE   4096
+#define MSM_MMSS_CLK_CTL_SIZE 4096
 
+#define MSM_TCSR_SIZE   4096
 #define PSHOLD_CTL_SU (TLMM_BASE_ADDR + 0x820)
 
 #endif
