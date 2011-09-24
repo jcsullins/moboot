@@ -51,4 +51,13 @@ void fbcon_putc(char c);
 void fbcon_clear(void);
 struct fbcon_config* fbcon_display(void);
 
+void fbcon_set_colors(
+		unsigned char bg_r,
+		unsigned char bg_g,
+		unsigned char bg_b,
+		unsigned char fg_r,
+		unsigned char fg_g,
+		unsigned char fg_b
+		);
+
 #endif /* __DEV_FBCON_H */

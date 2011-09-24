@@ -101,7 +101,8 @@ static void fbcon_drawglyph_tp(unsigned x, unsigned y, unsigned *glyph)
 				fb_put_pixel(x+xd, y+yd, BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
 			}
 			data >>= 1;
-		}
+	 	}
+		fb_put_pixel(x+FONT_WIDTH, y+yd, BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
 	}
 
 	data = glyph[1];
@@ -114,6 +115,7 @@ static void fbcon_drawglyph_tp(unsigned x, unsigned y, unsigned *glyph)
 			}
 			data >>= 1;
 		}
+		fb_put_pixel(x+FONT_WIDTH, y+yd+(FONT_HEIGHT/2), BGCOLOR_R, BGCOLOR_G, BGCOLOR_B);
 	}
 }
 #endif
@@ -199,7 +201,7 @@ void fbcon_clear(void)
 }
 
 #if DISPLAY_TYPE_TOUCHPAD
-static void fbcon_set_colors(
+void fbcon_set_colors(
 		unsigned char bg_r,
 		unsigned char bg_g,
 		unsigned char bg_b,
@@ -220,6 +222,23 @@ static void fbcon_set_colors(unsigned bg, unsigned fg)
 {
 	BGCOLOR = bg;
 	FGCOLOR = fg;
+}
+#endif
+
+#if DISPLAY_TYPE_TOUCHPAD
+void fbcon_setpos(unsigned x, unsigned y)
+{
+	unsigned newx, newy;
+
+	newx = x * (FONT_WIDTH + 1);
+	newy = y * (FONT_HEIGHT);
+
+	if (newx > max_pos.x || newy > max_pos.y) {
+		return;
+	} else {
+		cur_pos.x = newx;
+		cur_pos.y = newy;
+	}
 }
 #endif
 
