@@ -36,6 +36,7 @@ endif
 LK_TOP_DIR:= .
 BUILDDIR := $(BOOTLOADER_OUT)/build-$(PROJECT)
 OUTBIN := $(BUILDDIR)/lk.bin
+OUTUIMAGE := $(BUILDDIR)/lk.uImage
 OUTELF := $(BUILDDIR)/lk
 CONFIGHEADER := $(BUILDDIR)/config.h
 
@@ -72,7 +73,7 @@ CFLAGS += -ffunction-sections -fdata-sections
 LDFLAGS += -gc-sections
 
 # top level rule
-all:: $(OUTBIN) $(OUTELF).lst $(OUTELF).debug.lst $(OUTELF).sym $(OUTELF).size APPSBOOTHEADER
+all:: $(OUTUIMAGE) $(OUTBIN) $(OUTELF).lst $(OUTELF).debug.lst $(OUTELF).sym $(OUTELF).size APPSBOOTHEADER
 
 # the following three object lists are identical except for the ordering
 # which is bootobjs, kobjs, objs
@@ -155,6 +156,7 @@ OBJCOPY := $(TOOLCHAIN_PREFIX)objcopy
 CPPFILT := $(TOOLCHAIN_PREFIX)c++filt
 SIZE := $(TOOLCHAIN_PREFIX)size
 NM := $(TOOLCHAIN_PREFIX)nm
+MKIMAGE := mkimage
 
 # comment out or override if you want to see the full output of each command
 NOECHO ?= @
