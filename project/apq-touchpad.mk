@@ -4,7 +4,7 @@ LOCAL_DIR := $(GET_LOCAL_DIR)
 
 TARGET := apq-touchpad
 
-MODULES += app/aboot
+MODULES += app/moboot
 
 DEBUG := 2
 
