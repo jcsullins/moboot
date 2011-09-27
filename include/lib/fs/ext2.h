@@ -38,5 +38,8 @@ int ext2_read_file(fsfilecookie fcookie, void *buf, off_t offset, size_t len);
 int ext2_close_file(fsfilecookie fcookie);
 int ext2_stat_file(fsfilecookie fcookie, struct file_stat *);
 
+int ext2_dirent(fsfilecookie fcookie, const char *path, unsigned index, char **name);
+
+
 #endif
 

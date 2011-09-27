@@ -28,6 +28,10 @@ void fs_init(void);
 struct file_stat {
 	bool is_dir;
 	off_t size;
+	uint16_t	mode;
+	uint32_t	atime;
+	uint32_t	ctime;
+	uint32_t	mtime;
 };
 
 typedef void *filecookie;

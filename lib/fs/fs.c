@@ -48,6 +48,7 @@ struct fs_type {
 	int (*read)(filecookie, void *, off_t, size_t);
 	int (*write)(filecookie, const void *, off_t, size_t);
 	int (*close)(filecookie);
+	int (*dirent)(fscookie, const char *, unsigned , char **);
 };
 
 struct fs_mount {
@@ -76,6 +77,7 @@ static struct fs_type types[] = {
 		.stat = ext2_stat_file,
 		.read = ext2_read_file,
 		.close = ext2_close_file,
+		.dirent = ext2_dirent,
 	},
 #endif
 #if WITH_LIB_FS_FAT32
@@ -329,6 +331,27 @@ int fs_write_file(filecookie fcookie, const void *buf, off_t offset, size_t len)
 		return ERR_NOT_SUPPORTED;
 
 	return f->mount->type->write(f->cookie, buf, offset, len);
+}
+
+int fs_dirent(const char *path, unsigned index, char **name)
+{
+	char temppath[512];
+
+	strlcpy(temppath, path, sizeof(temppath));
+	fs_normalize_path(temppath);
+
+	const char *newpath;
+	struct fs_mount *mount = find_mount(temppath, &newpath);
+
+	if (!mount) {
+		dprintf(SPEW, "find_mount('%s', '%s')\n", temppath, newpath);
+		return -1;
+	}
+
+	if (!mount->type->dirent)
+		return -1;
+
+	return mount->type->dirent(mount->cookie, newpath, index, name);
 }
 
 int fs_close_file(filecookie fcookie)

@@ -30,6 +30,70 @@
 #define LOCAL_TRACE 0
 
 /* read in the dir, look for the entry */
+int ext2_dirent_lookup(ext2_t *ext2, struct ext2_inode *dir_inode, const char **name, unsigned index)
+{
+	uint file_blocknum;
+	int err;
+	uint8_t *buf;
+	unsigned curpos = 0;
+	
+	if (!S_ISDIR(dir_inode->i_mode))
+		return ERR_NOT_DIR;
+
+	buf = malloc(EXT2_BLOCK_SIZE(ext2->sb));
+
+	file_blocknum = 0;
+	for (;;) {
+		/* read in the offset */
+		err = ext2_read_inode(ext2, dir_inode, buf, file_blocknum * EXT2_BLOCK_SIZE(ext2->sb), EXT2_BLOCK_SIZE(ext2->sb));
+		if (err <= 0) {
+			free(buf);
+			if (err == 0)
+				return 0;
+			else
+				return -1;
+		}
+
+		/* walk through the directory entries, looking for the one that matches */
+		struct ext2_dir_entry_2 *ent;
+		uint pos = 0;
+		while (pos < EXT2_BLOCK_SIZE(ext2->sb)) {
+			ent = (struct ext2_dir_entry_2 *)&buf[pos];
+
+			LTRACEF("ent %d:%d: inode 0x%x, reclen %d, namelen %d\n",
+					file_blocknum, pos, LE32(ent->inode), LE16(ent->rec_len), ent->name_len/* , ent->name*/);
+
+			/* sanity check the record length */
+			if (LE16(ent->rec_len) == 0)
+				break;
+
+			if (strncmp(ent->name, ".", ent->name_len) != 0 &&
+					strncmp(ent->name, "..", ent->name_len) != 0) {
+				if (curpos == index) {
+					*name = malloc(ent->name_len + 1);
+					memcpy(*name, ent->name, ent->name_len);
+					*((char *)(*name) + ent->name_len) = 0;
+					return 1;
+				} else {
+					curpos++;
+				}
+			}
+				
+			pos += ROUNDUP(LE16(ent->rec_len), 4);
+		}
+
+		file_blocknum++;
+
+		/* sanity check the directory. 4MB should be enough */
+		if (file_blocknum > 1024) {
+			free(buf);
+			return -1;
+		}
+	}
+	return -1;
+}
+
+/* read in the dir, look for the entry */
 static int ext2_dir_lookup(ext2_t *ext2, struct ext2_inode *dir_inode, const char *name, inodenum_t *inum)
 {
 	uint file_blocknum;
@@ -194,5 +258,26 @@ int ext2_lookup(ext2_t *ext2, const char *_path, inodenum_t *inum)
 	strlcpy(path, _path, sizeof(path));
 
 	return ext2_walk(ext2, path, &ext2->root_inode, inum, 1);
+}
+
+int ext2_dirent(fscookie cookie, const char *_path, unsigned index, char **name)
+{
+	ext2_t *ext2 = (ext2_t *)cookie;
+	inodenum_t diri;
+	struct ext2_inode inode;
+	struct ext2_inode *inodep;
+	int rv;
+
+	if (strlen(_path) != 0) {
+		rv = ext2_walk(ext2, _path, &ext2->root_inode, &diri, 1);
+		if (rv < 0) return rv;
+		rv = ext2_load_inode(ext2, diri, &inode);
+		if (rv < 0) return rv;
+		inodep = &inode;
+	} else {
+		inodep = &ext2->root_inode;
+	}
+
+	return ext2_dirent_lookup(ext2, inodep, name, index);
 }
 

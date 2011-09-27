@@ -116,6 +116,11 @@ int ext2_stat_file(fsfilecookie fcookie, struct file_stat *stat)
 	if (S_ISDIR(file->inode.i_mode))
 		stat->is_dir = true;
 
+	stat->mode = file->inode.i_mode;
+	stat->atime = file->inode.i_atime;
+	stat->ctime = file->inode.i_ctime;
+	stat->mtime = file->inode.i_mtime;
+
 	return 0;
 }
 
