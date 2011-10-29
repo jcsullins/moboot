@@ -45,8 +45,12 @@
  */
 static struct {
 	gfx_surface *surface;
+	gfx_surface *bg_surface;
 	uint rows, columns;
 	uint extray; // extra pixels left over if the rows doesn't fit precisely
+	uint extrax; // extra pixels left over if the rows doesn't fit precisely
+
+	uint trans;
 
 	uint x, y;
 
@@ -69,7 +73,11 @@ static void gfxconsole_putc(char c)
 				p_num = 0;
 				state = ESCAPE;
 			} else {
-				font_draw_char(gfxconsole.surface, c, gfxconsole.x * FONT_X, gfxconsole.y * FONT_Y, gfxconsole.front_color);
+				if (gfxconsole.trans) {
+					font_draw_char_trans(gfxconsole.surface, c, gfxconsole.x * FONT_X, gfxconsole.y * FONT_Y, gfxconsole.front_color, gfxconsole.bg_surface);
+				} else {
+					font_draw_char(gfxconsole.surface, c, gfxconsole.x * FONT_X, gfxconsole.y * FONT_Y, gfxconsole.front_color, gfxconsole.back_color);
+				}
 				gfxconsole.x++;
 			}
 			break;
@@ -86,7 +94,11 @@ static void gfxconsole_putc(char c)
 			} else if (c == '[') {
 				// eat this character
 			} else {
-				font_draw_char(gfxconsole.surface, c, gfxconsole.x * FONT_X, gfxconsole.y * FONT_Y, gfxconsole.front_color);
+				if (gfxconsole.trans) {
+					font_draw_char_trans(gfxconsole.surface, c, gfxconsole.x * FONT_X, gfxconsole.y * FONT_Y, gfxconsole.front_color, gfxconsole.bg_surface);
+				} else {
+					font_draw_char(gfxconsole.surface, c, gfxconsole.x * FONT_X, gfxconsole.y * FONT_Y, gfxconsole.front_color, gfxconsole.back_color);
+				}
 				gfxconsole.x++;
 				state = NORMAL;
 			}
@@ -100,10 +112,17 @@ static void gfxconsole_putc(char c)
 	}
 	if(gfxconsole.y >= gfxconsole.rows) {
 		// scroll up
-		gfx_copyrect(gfxconsole.surface, 0, FONT_Y, gfxconsole.surface->width, gfxconsole.surface->height - FONT_Y - gfxconsole.extray, 0, 0);
-		gfxconsole.y--;
-		gfx_fillrect(gfxconsole.surface, 0, gfxconsole.surface->height - FONT_Y - gfxconsole.extray, gfxconsole.surface->width, FONT_Y, gfxconsole.back_color);
-		gfx_flush(gfxconsole.surface);
+		if (gfxconsole.surface->rotation == 1) {
+			gfx_copyrect(gfxconsole.surface, FONT_Y, 0, gfxconsole.surface->width - FONT_Y, gfxconsole.surface->height, 0, 0);
+			gfxconsole.y--;
+			gfx_fillrect(gfxconsole.surface, gfxconsole.surface->width - FONT_Y - gfxconsole.extrax, 0, FONT_Y, gfxconsole.surface->height, gfxconsole.back_color);
+			gfx_flush(gfxconsole.surface);
+		} else {
+			gfx_copyrect(gfxconsole.surface, 0, FONT_Y, gfxconsole.surface->width, gfxconsole.surface->height - FONT_Y - gfxconsole.extray, 0, 0);
+			gfxconsole.y--;
+			gfx_fillrect(gfxconsole.surface, 0, gfxconsole.surface->height - FONT_Y - gfxconsole.extray, gfxconsole.surface->width, FONT_Y, gfxconsole.back_color);
+			gfx_flush(gfxconsole.surface);
+		}
 	}
 }
 
@@ -121,9 +140,18 @@ void gfxconsole_start(gfx_surface *surface)
 	gfxconsole.surface = surface;
 
 	// calculate how many rows/columns we have
-	gfxconsole.rows = surface->height / FONT_Y;
-	gfxconsole.columns = surface->width / FONT_X;
-	gfxconsole.extray = surface->height - (gfxconsole.rows * FONT_Y);
+	if (surface->rotation == 1) {
+		gfxconsole.rows = surface->width / FONT_Y;
+		gfxconsole.columns = surface->height / FONT_X;
+		gfxconsole.extrax = surface->width - (gfxconsole.rows * FONT_Y);
+	} else {
+		gfxconsole.rows = surface->height / FONT_Y;
+		gfxconsole.columns = surface->width / FONT_X;
+		gfxconsole.extray = surface->height - (gfxconsole.rows * FONT_Y);
+	}
+
+	gfxconsole.trans = 0;
+	gfxconsole.bg_surface = NULL;
 
 	dprintf(SPEW, "gfxconsole: rows %d, columns %d, extray %d\n", gfxconsole.rows, gfxconsole.columns, gfxconsole.extray);
 
@@ -155,5 +183,51 @@ void gfxconsole_start_on_display(void)
 	gfx_surface *s = gfx_create_surface_from_display(&info);
 	gfxconsole_start(s);
 	started = true;
+}
+
+void gfxconsole_setpos(unsigned x, unsigned y)
+{
+	unsigned newx, newy;
+
+	newx = x;
+	newy = y;
+
+	if (newx > gfxconsole.columns || newy > gfxconsole.rows) {
+		return;
+	} else {
+		gfxconsole.x = newx;
+		gfxconsole.y = newy;
+	}
+}
+
+void gfxconsole_set_colors(uint32_t bg, uint32_t fg)
+{
+	gfxconsole.front_color = fg;
+	gfxconsole.back_color = bg;
+}
+
+void gfxconsole_clear()
+{
+	gfx_draw_pattern_black();
+}
+
+unsigned gfxconsole_getwidth()
+{
+	return gfxconsole.columns;
+}
+
+unsigned gfxconsole_getheight()
+{
+	return gfxconsole.rows;
+}
+
+void gfxconsole_settrans(unsigned val)
+{
+	gfxconsole.trans = val;
+}
+
+void gfxconsole_setbackground(gfx_surface *bgs)
+{
+	gfxconsole.bg_surface = bgs;
 }
 

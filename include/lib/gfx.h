@@ -35,6 +35,7 @@ typedef struct gfx_surface {
 	uint pixelsize;
 	size_t len;
 	uint alpha;
+	uint rotation;
 
 	// function pointers
 	void (*copyrect)(struct gfx_surface *, uint x, uint y, uint width, uint height, uint x2, uint y2);

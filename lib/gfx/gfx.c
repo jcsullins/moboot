@@ -284,6 +284,127 @@ uint32_t alpha32_add_ignore_destalpha(uint32_t dest, uint32_t src)
  *
  * Currently does not support alpha channel.
  */
+void gfx_surface_blend_pixel(struct gfx_surface *target, struct gfx_surface *source, uint x, uint y)
+{
+	if (x >= target->width || x >= source->width)
+		return;
+	if (y >= target->height || y >= source->width)
+		return;
+
+
+	// XXX total hack to deal with various blends
+	if (source->format == GFX_FORMAT_RGB_565 && target->format == GFX_FORMAT_RGB_565) {
+		// 16 bit to 16 bit
+		uint16_t *src = &((uint16_t *)source->ptr)[x + y * source->stride];
+		uint16_t *dest = &((uint16_t *)target->ptr)[x + y * target->stride];
+		*dest = *src;
+	} else if (source->format == GFX_FORMAT_ARGB_8888 && target->format == GFX_FORMAT_ARGB_8888) {
+		// both are 32 bit modes, both alpha
+		uint32_t *src = &((uint32_t *)source->ptr)[x + y * source->stride];
+		uint32_t *dest = &((uint32_t *)target->ptr)[x + y * target->stride];
+		*dest = alpha32_add_ignore_destalpha(*dest, *src);
+	} else if (source->format == GFX_FORMAT_RGB_x888 && target->format == GFX_FORMAT_RGB_x888) {
+		// both are 32 bit modes, no alpha
+		uint32_t *src = &((uint32_t *)source->ptr)[x + y * source->stride];
+		uint32_t *dest = &((uint32_t *)target->ptr)[x + y * target->stride];
+		*dest = *src;
+	} else {
+		panic("gfx_surface_blend: unimplemented colorspace combination (source %d target %d)\n", source->format, target->format);
+	}
+}
+/**
+ * @brief  Copy pixels from source to dest.
+ *
+ * Currently does not support alpha channel.
+ */
+void gfx_surface_blend_rect(struct gfx_surface *target, struct gfx_surface *source, uint destx, uint desty, uint srcx, uint srcy, uint srcw, uint srch)
+{
+	DEBUG_ASSERT(target->format == source->format);
+
+	LTRACEF("target %p, source %p, destx %u, desty %u\n", target, source, destx, desty);
+
+	if (destx >= target->width)
+		return;
+	if (desty >= target->height)
+		return;
+
+	uint width = srcw;
+	if (destx + width > target->width)
+		width = target->width - destx;
+
+	uint height = srch;
+	if (desty + height > target->height)
+		height = target->height - desty;
+
+	// XXX total hack to deal with various blends
+	if (source->format == GFX_FORMAT_RGB_565 && target->format == GFX_FORMAT_RGB_565) {
+		// 16 bit to 16 bit
+		const uint16_t *src = (const uint16_t *)source->ptr;
+		uint16_t *dest = &((uint16_t *)target->ptr)[destx + desty * target->stride];
+		uint dest_stride_diff = target->stride - width;
+		uint source_stride_diff = source->stride - width;
+
+		LTRACEF("w %u h %u dstride %u sstride %u\n", width, height, dest_stride_diff, source_stride_diff);
+
+		uint i, j;
+		for (i=0; i < height; i++) {
+			for (j=0; j < width; j++) {
+				*dest = *src;
+				dest++;
+				src++;
+			}
+			dest += dest_stride_diff;
+			src += source_stride_diff;
+		}
+	} else if (source->format == GFX_FORMAT_ARGB_8888 && target->format == GFX_FORMAT_ARGB_8888) {
+		// both are 32 bit modes, both alpha
+		const uint32_t *src = (const uint32_t *)source->ptr;
+		uint32_t *dest = &((uint32_t *)target->ptr)[destx + desty * target->stride];
+		uint dest_stride_diff = target->stride - width;
+		uint source_stride_diff = source->stride - width;
+
+		LTRACEF("w %u h %u dstride %u sstride %u\n", width, height, dest_stride_diff, source_stride_diff);
+
+		uint i, j;
+		for (i=0; i < height; i++) {
+			for (j=0; j < width; j++) {
+				// XXX ignores destination alpha
+				*dest = alpha32_add_ignore_destalpha(*dest, *src);
+				dest++;
+				src++;
+			}
+			dest += dest_stride_diff;
+			src += source_stride_diff;
+		}
+	} else if (source->format == GFX_FORMAT_RGB_x888 && target->format == GFX_FORMAT_RGB_x888) {
+		// both are 32 bit modes, no alpha
+		const uint32_t *src = &((uint32_t *)source->ptr)[srcx + srcy * source->stride];
+		uint32_t *dest = &((uint32_t *)target->ptr)[destx + desty * target->stride];
+		uint dest_stride_diff = target->stride - width;
+		uint source_stride_diff = source->stride - width;
+
+		LTRACEF("w %u h %u dstride %u sstride %u\n", width, height, dest_stride_diff, source_stride_diff);
+
+		uint i, j;
+		for (i=0; i < height; i++) {
+			for (j=0; j < width; j++) {
+				*dest = *src;
+				dest++;
+				src++;
+			}
+			dest += dest_stride_diff;
+			src += source_stride_diff;
+		}
+	} else {
+		panic("gfx_surface_blend: unimplemented colorspace combination (source %d target %d)\n", source->format, target->format);
+	}
+}
+
+/**
+ * @brief  Copy pixels from source to dest.
+ *
+ * Currently does not support alpha channel.
+ */
 void gfx_surface_blend(struct gfx_surface *target, struct gfx_surface *source, uint destx, uint desty)
 {
 	DEBUG_ASSERT(target->format == source->format);
@@ -466,6 +587,8 @@ gfx_surface *gfx_create_surface_from_display(struct display_info *info)
 
 	surface->flush = info->flush;
 
+	surface->rotation = info->rotation;
+
 	return surface;
 }
 
@@ -525,6 +648,29 @@ void gfx_draw_pattern_white(void)
 	for (y = 0; y < surface->height; y++) {
 		for (x = 0; x < surface->width; x++) {
 			gfx_putpixel(surface, x, y, 0xFFFFFF);
+		}
+	}
+
+	if (surface->flush)
+		surface->flush(0, surface->height-1);
+
+	gfx_surface_destroy(surface);
+}
+
+/**
+ * @brief  Fill default display with black
+ */
+void gfx_draw_pattern_black(void)
+{
+	struct display_info info;
+	display_get_info(&info);
+
+	gfx_surface *surface = gfx_create_surface_from_display(&info);
+
+	uint x, y;
+	for (y = 0; y < surface->height; y++) {
+		for (x = 0; x < surface->width; x++) {
+			gfx_putpixel(surface, x, y, 0);
 		}
 	}
 
