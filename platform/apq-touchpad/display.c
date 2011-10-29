@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2008-2010 Travis Geiselbrecht
+ * Copyright (c) 2010 Travis Geiselbrecht
+ *
+ * Copyright (c) 2011 James Sullins
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
@@ -20,30 +22,34 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __DEV_DISPLAY_H
-#define __DEV_DISPLAY_H
-
-#include <sys/types.h>
+#include <err.h>
+#include <debug.h>
+#include <platform.h>
+#include <dev/display.h>
 #include <lib/gfx.h>
+#include <reg.h>
 
-void display_init(void);
-int display_enable(bool enable);
-void display_pre_freq_change(void);
-void display_post_freq_change(void);
+static int display_w, display_h;
+static void *display_fb;
 
-struct display_info {
-	void *framebuffer;
-	gfx_format format;
-	uint width;
-	uint height;
-	uint stride;
-	uint rotation;
+void platform_init_display(void)
+{
 
-	// Update function	
-	void (*flush)(uint starty, uint endy);
-};
+	display_fb = (void *)0x7f600000;
+	display_w = 1024;
+	display_h = 768;
+}
 
-void display_get_info(struct display_info *info);
+void display_get_info(struct display_info *info)
+{
 
-#endif
+	info->framebuffer = display_fb;
+	info->format = GFX_FORMAT_RGB_x888;
+	info->width = display_w;
+	info->height = display_h;
+	info->stride = display_w;
+	info->flush = NULL;
+	info->rotation = 0;
+}
+
 
