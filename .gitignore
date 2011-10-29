@@ -10,3 +10,6 @@ target/*/tools/mkheader
 cscope.*
 ncscope.*
 
+# temp work area
+tmp
+
