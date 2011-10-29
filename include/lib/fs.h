@@ -48,6 +48,7 @@ int fs_stat_file(filecookie fcookie, struct file_stat *);
 
 /* convenience routines */
 ssize_t fs_load_file(const char *path, void *ptr, size_t maxlen);
+ssize_t fs_load_file_mem(const char *path, void **ptr);
 
 /* walk through a path string, removing duplicate path seperators, flattening . and .. references */
 void fs_normalize_path(char *path);

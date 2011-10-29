@@ -396,6 +396,31 @@ ssize_t fs_load_file(const char *path, void *ptr, size_t maxlen)
 	return err;
 }
 
+ssize_t fs_load_file_mem(const char *path, void **ptr)
+{
+	int err;
+	filecookie cookie;
+
+	/* open the file */
+	err = fs_open_file(path, &cookie);
+	if (err < 0)
+		return err;
+
+	/* stat it for size, see how much we need to read */
+	struct file_stat stat;
+	fs_stat_file(cookie, &stat);
+
+	*ptr = malloc(stat.size);
+
+	if (!(*ptr)) return -1;
+
+	err = fs_read_file(cookie, *ptr, 0, stat.size);
+
+	fs_close_file(cookie);
+
+	return err;
+}
+
 static void test_normalize(const char *in)
 {
 	char path[1024];
