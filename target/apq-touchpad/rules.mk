@@ -4,16 +4,17 @@ INCLUDES += -I$(LOCAL_DIR)/include -I$(LK_TOP_DIR)/platform/msm_shared
 
 PLATFORM := apq-touchpad
 
-MEMBASE := 0x40208000 		# kernel load address
-MEMSIZE := 0x00100000 		# 1MB
+#MEMBASE := 0x40208000 		# kernel load address
+MEMBASE := 0x50000000 		# kernel load address
+MEMSIZE := 0x00400000 		# 4MB
 
 SCRATCH_ADDR := 0x70000000
-SCRATCH_SIZE := 1024 		#size in MB
+#SCRATCH_ADDR := 0x51000000
+SCRATCH_SIZE := 64	 		#size in MB
 
 KEYS_USE_GPIO_KEYPAD := 1
 
 MODULES += \
-	dev/keys \
 	dev/ssbi \
 	dev/pmic/pm8921 \
 	lib/ptable
