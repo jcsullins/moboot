@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# Sample script to create uMulti
+# requires existing zImage and ramdisk.img.gz
+# creates kernel.uimg and ramdisk.uimg temp files (doesn't remove)
+# creates final uImage.sample
+
+mkimage \
+		-A arm \
+		-O linux \
+		-T kernel \
+		-C none \
+		-a 0x40208000 -e 0x40208000 \
+		-n sample-kernel \
+		-d zImage \
+		kernel.uimg
+
+mkimage \
+		-A arm \
+		-O linux \
+		-T ramdisk \
+		-C none  \
+		-n sample-ramdisk \
+		-d ramdisk.gz \
+		ramdisk.uimg
+
+mkimage \
+		-A arm \
+		-O linux \
+		-T multi \
+		-C none \
+		-n sample-umulti \
+		-d kernel.uimg:ramdisk.uimg \
+		uImage.sample
+
