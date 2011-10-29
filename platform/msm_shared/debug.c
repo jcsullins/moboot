@@ -36,23 +36,39 @@
 #include <dev/fbcon.h>
 #include <dev/uart.h>
 
+void (*debug_output_fn)(char c);
+
+void register_debug_output(void (*fn)(char c))
+{
+	debug_output_fn = fn;
+}
+
+void debug_init()
+{
+	debug_output_fn = NULL;
+}
+
 void _dputc(char c)
 {
-#if WITH_DEBUG_DCC
-	if (c == '\n') {
-		while (dcc_putc('\r') < 0);
+	if (debug_output_fn) {
+		debug_output_fn(c);
+	} else {
+		#if WITH_DEBUG_DCC
+		if (c == '\n') {
+			while (dcc_putc('\r') < 0);
+		}
+		while (dcc_putc(c) < 0);
+		#endif
+		#if WITH_DEBUG_UART
+		uart_putc(0, c);
+		#endif
+		#if WITH_DEBUG_FBCON && WITH_DEV_FBCON
+		fbcon_putc(c);
+		#endif
+		#if WITH_DEBUG_JTAG
+		jtag_dputc(c);
+		#endif
 	}
-	while (dcc_putc(c) < 0);
-#endif
-#if WITH_DEBUG_UART
-	uart_putc(0, c);
-#endif
-#if WITH_DEBUG_FBCON && WITH_DEV_FBCON
-	fbcon_putc(c);
-#endif
-#if WITH_DEBUG_JTAG
-	jtag_dputc(c);
-#endif
 }
 
 int dgetc(char *c, bool wait)
