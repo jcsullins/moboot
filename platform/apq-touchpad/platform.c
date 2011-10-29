@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2011, Code Aurora Forum. All rights reserved.
  *
+ * Copyright (c) 2011, James Sullins
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -72,7 +74,8 @@ void platform_early_init(void)
 
 void platform_init(void)
 {
-	dprintf(INFO, "platform_init()\n");
+	dprintf(SPEW, "platform_init()\n");
+	platform_init_display();
 }
 
 /* Setup memory for this platform */
@@ -136,6 +139,7 @@ void display_init(void)
     else
         runonce = 1;
 
+	gfxconsole_start_on_display();
     fbcon_setup(&fb_cfg);
 }
 
