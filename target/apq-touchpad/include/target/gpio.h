@@ -31,10 +31,18 @@
 
 #define BIT(nr)			(1UL << (nr))
 
+#define NR_MSM_GPIOS 173
+#define ARCH_NR_GPIOS 512
+
+#define PM8058_GPIO_BASE			NR_MSM_GPIOS
+#define PM8058_GPIO_PM_TO_SYS(pm_gpio)		(pm_gpio + PM8058_GPIO_BASE)
+
 #define MSM_TLMM_BASE 0x00800000
 #define KEY_UP_GPIO				103
 #define KEY_DOWN_GPIO			104
 #define KEY_SELECT_GPIO			40
+#define KEY_UP_GPIO_3G			(PM8058_GPIO_PM_TO_SYS(6-1))
+#define KEY_DOWN_GPIO_3G			(PM8058_GPIO_PM_TO_SYS(7-1))
 
 #define GPIO_CONFIG(gpio)         (MSM_TLMM_BASE + 0x1000 + (0x10 * (gpio)))
 #define GPIO_IN_OUT(gpio)         (MSM_TLMM_BASE + 0x1004 + (0x10 * (gpio)))

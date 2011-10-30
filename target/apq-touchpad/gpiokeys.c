@@ -28,11 +28,13 @@
 
 #include <target/gpio.h>
 #include <target/gpiokeys.h>
+#include <kernel/thread.h>
 
 int gpiokeys_poll(unsigned keylist) {
 
 	int keys_result = 0;
 
+#ifndef IS_TOUCHPAD_3G
 	if (keylist & KEY_UP) {
 		if (apq_gpio_get(KEY_UP_GPIO) == 0) {
 			keys_result += KEY_UP;
@@ -44,6 +46,19 @@ int gpiokeys_poll(unsigned keylist) {
 			keys_result += KEY_DOWN;
 		}
 	}
+#else
+	if (keylist & KEY_UP) {
+		if (!pm8058_gpio_get(5)) {
+			keys_result += KEY_UP;
+		}
+	}
+
+	if (keylist & KEY_DOWN) {
+		if (!pm8058_gpio_get(6)) {
+			keys_result += KEY_DOWN;
+		}
+	}
+#endif
 
 	if (keylist & KEY_SELECT) {
 		if (apq_gpio_get(KEY_SELECT_GPIO) == 0) {
@@ -52,5 +67,32 @@ int gpiokeys_poll(unsigned keylist) {
 	}
 
 	return keys_result;
+}
+
+
+void gpiokeys_wait_select()
+{
+	unsigned keys, is_pressed;
+
+	while (gpiokeys_poll(KEY_ALL)) {
+		thread_sleep(20);
+	}
+
+	is_pressed = gpiokeys_poll(KEY_ALL);
+	while (1) {
+		thread_sleep(20);
+		keys = gpiokeys_poll(KEY_ALL);
+		if (is_pressed && !keys) {
+			if (is_pressed & KEY_SELECT) {
+				return;
+			}
+		}
+		is_pressed = keys;
+	}
+}
+
+bool usbhost_poll()
+{
+	return(pm8058_gpio_get(36));
 }
 

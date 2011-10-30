@@ -38,5 +38,6 @@
 #define KEY_ALL		(KEY_UP|KEY_DOWN|KEY_SELECT)
 
 extern int gpiokeys_poll(unsigned keylist);
+extern void gpiokeys_wait_select();
 
 #endif
