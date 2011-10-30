@@ -3,6 +3,8 @@
  *
  * Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
+ * Copyright (c) 2011 James Sullins
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files
  * (the "Software"), to deal in the Software without restriction,
@@ -70,9 +72,12 @@ void kmain(void)
 #endif
 {
 
+// should only be done for early debug output??
 #if DISPLAY_TYPE_TOUCHPAD
 	display_init();
 #endif
+
+	init_passed_atags(atags_ptr);
 
 	// get us into some sort of thread context
 	thread_init_early();
