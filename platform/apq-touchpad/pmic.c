@@ -36,39 +36,6 @@
 #define TRUE  1
 #define FALSE 0
 
-/* FTS regulator PMR registers */
-#define SSBI_REG_ADDR_S1_PMR		(0xA7)
-#define SSBI_REG_ADDR_S2_PMR		(0xA8)
-#define SSBI_REG_ADDR_S3_PMR		(0xA9)
-#define SSBI_REG_ADDR_S4_PMR		(0xAA)
-
-#define REGULATOR_PMR_STATE_MASK	0x60
-#define REGULATOR_PMR_STATE_OFF		0x20
-
-/* Regulator control registers for shutdown/reset */
-#define SSBI_REG_ADDR_L22_CTRL		0x121
-
-/* SLEEP CNTL register */
-#define SSBI_REG_ADDR_SLEEP_CNTL	0x02B
-
-#define PM8058_SLEEP_SMPL_EN_MASK	0x04
-#define PM8058_SLEEP_SMPL_EN_RESET	0x04
-#define PM8058_SLEEP_SMPL_EN_PWR_OFF	0x00
-
-/* PON CNTL 1 register */
-#define SSBI_REG_ADDR_PON_CNTL_1	0x01C
-
-#define PM8058_PON_PUP_MASK		0xF0
-
-#define PM8058_PON_WD_EN_MASK		0x08
-#define PM8058_PON_WD_EN_RESET		0x08
-#define PM8058_PON_WD_EN_PWR_OFF	0x00
-
-#define PM8058_RTC_CTRL		0x1E8
-#define PM8058_RTC_ALARM_ENABLE	BIT(1)
-
-#define PM_IRQ_ID_TO_BLOCK_INDEX(id) (uint8_t)(id / 8)
-#define PM_IRQ_ID_TO_BIT_MASK(id)    (uint8_t)(1 << (id % 8))
 
 typedef int (*pm8058_write_func) (unsigned char *, unsigned short,
                                   unsigned short);
@@ -326,5 +293,58 @@ int pm8058_rtc0_alarm_irq_disable(void)
 	}
 
 	return rc;
+}
+
+int pm8058_gpio_config(int gpio, struct pm8058_gpio *param)
+{
+	int	rc;
+	pm8058_write_func wr_function = &pa1_ssbi2_write_bytes;
+
+	unsigned char bank[8];
+	static int dir_map[] = {
+		PM8058_GPIO_MODE_OFF,
+		PM8058_GPIO_MODE_OUTPUT,
+		PM8058_GPIO_MODE_INPUT,
+		PM8058_GPIO_MODE_BOTH,
+	};
+
+	if (param == 0) {
+	  dprintf (INFO, "pm8058_gpio struct not defined\n");
+          return -1;
+	}
+
+	/* Select banks and configure the gpio */
+	bank[0] = PM8058_GPIO_WRITE |
+		((param->vin_sel << PM8058_GPIO_VIN_SHIFT) &
+			PM8058_GPIO_VIN_MASK) |
+		PM8058_GPIO_MODE_ENABLE;
+	bank[1] = PM8058_GPIO_WRITE |
+		((1 << PM8058_GPIO_BANK_SHIFT) & PM8058_GPIO_BANK_MASK) |
+		((dir_map[param->direction] << PM8058_GPIO_MODE_SHIFT) &
+			PM8058_GPIO_MODE_MASK) |
+		((param->direction & PM_GPIO_DIR_OUT) ?
+			PM8058_GPIO_OUT_BUFFER : 0);
+	bank[2] = PM8058_GPIO_WRITE |
+		((2 << PM8058_GPIO_BANK_SHIFT) & PM8058_GPIO_BANK_MASK) |
+		((param->pull << PM8058_GPIO_PULL_SHIFT) &
+			PM8058_GPIO_PULL_MASK);
+	bank[3] = PM8058_GPIO_WRITE |
+		((3 << PM8058_GPIO_BANK_SHIFT) & PM8058_GPIO_BANK_MASK) |
+		((param->out_strength << PM8058_GPIO_OUT_STRENGTH_SHIFT) &
+			PM8058_GPIO_OUT_STRENGTH_MASK);
+	bank[4] = PM8058_GPIO_WRITE |
+		((4 << PM8058_GPIO_BANK_SHIFT) & PM8058_GPIO_BANK_MASK) |
+		((param->function << PM8058_GPIO_FUNC_SHIFT) &
+			PM8058_GPIO_FUNC_MASK);
+	bank[5] = PM8058_GPIO_WRITE |
+		((5 << PM8058_GPIO_BANK_SHIFT) & PM8058_GPIO_BANK_MASK) |
+		(param->inv_int_pol ? 0 : PM8058_GPIO_NON_INT_POL_INV);
+
+	rc = (*wr_function)(bank, 6, SSBI_REG_ADDR_GPIO(gpio));
+	if (rc) {
+	        dprintf(INFO, "Failed on 1st ssbi_write(): rc=%d.\n", rc);
+		return 1;
+	}
+	return 0;
 }
 

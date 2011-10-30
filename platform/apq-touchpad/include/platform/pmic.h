@@ -193,4 +193,125 @@ typedef enum
     PM_GPIO40_CHGED_ST_IRQ_ID   = 231,
 }pm_irq_id_type;
 
+struct pm8058_gpio {
+	int		direction;
+	int		pull;
+	int		vin_sel;	/* 0..7 */
+	int		out_strength;
+	int		function;
+	int		inv_int_pol;	/* invert interrupt polarity */
+};
+
+
+/* vin_sel: Voltage Input Select */
+#define	PM_GPIO_VIN_VPH			0
+#define	PM_GPIO_VIN_BB			1
+#define	PM_GPIO_VIN_S3			2
+#define	PM_GPIO_VIN_L3			3
+#define	PM_GPIO_VIN_L7			4
+#define	PM_GPIO_VIN_L6			5
+#define	PM_GPIO_VIN_L5			6
+#define	PM_GPIO_VIN_L2			7
+
+/* FTS regulator PMR registers */
+#define SSBI_REG_ADDR_S1_PMR		(0xA7)
+#define SSBI_REG_ADDR_S2_PMR		(0xA8)
+#define SSBI_REG_ADDR_S3_PMR		(0xA9)
+#define SSBI_REG_ADDR_S4_PMR		(0xAA)
+
+#define REGULATOR_PMR_STATE_MASK	0x60
+#define REGULATOR_PMR_STATE_OFF		0x20
+
+/* Regulator control registers for shutdown/reset */
+#define SSBI_REG_ADDR_L22_CTRL		0x121
+
+/* SLEEP CNTL register */
+#define SSBI_REG_ADDR_SLEEP_CNTL	0x02B
+
+#define PM8058_SLEEP_SMPL_EN_MASK	0x04
+#define PM8058_SLEEP_SMPL_EN_RESET	0x04
+#define PM8058_SLEEP_SMPL_EN_PWR_OFF	0x00
+
+/* PON CNTL 1 register */
+#define SSBI_REG_ADDR_PON_CNTL_1	0x01C
+
+#define PM8058_PON_PUP_MASK		0xF0
+
+#define PM8058_PON_WD_EN_MASK		0x08
+#define PM8058_PON_WD_EN_RESET		0x08
+#define PM8058_PON_WD_EN_PWR_OFF	0x00
+
+#define PM8058_RTC_CTRL		0x1E8
+#define PM8058_RTC_ALARM_ENABLE	BIT(1)
+
+#define	SSBI_REG_ADDR_GPIO_BASE		0x150
+
+#define QT_PMIC_GPIO_KYPD_SNS           0x008
+#define QT_PMIC_GPIO_KYPD_DRV           0x003
+
+#define SSBI_OFFSET_ADDR_GPIO_KYPD_SNS  0x000
+#define SSBI_OFFSET_ADDR_GPIO_KYPD_DRV  0x008
+
+#define	SSBI_REG_ADDR_GPIO(n)		(SSBI_REG_ADDR_GPIO_BASE + n)
+
+#define	PM_GPIO_DIR_OUT			0x01
+#define	PM_GPIO_DIR_IN			0x02
+#define	PM_GPIO_DIR_BOTH		(PM_GPIO_DIR_OUT | PM_GPIO_DIR_IN)
+
+#define	PM_GPIO_PULL_UP1		2
+#define	PM_GPIO_PULL_UP2		3
+#define	PM_GPIO_PULL_DN			4
+#define	PM_GPIO_PULL_NO			5
+
+#define	PM_GPIO_STRENGTH_NO		0
+#define	PM_GPIO_STRENGTH_HIGH		1
+#define	PM_GPIO_STRENGTH_MED		2
+#define	PM_GPIO_STRENGTH_LOW		3
+
+#define	PM_GPIO_FUNC_NORMAL		0
+#define	PM_GPIO_FUNC_PAIRED		1
+#define	PM_GPIO_FUNC_1			2
+#define	PM_GPIO_FUNC_2			3
+
+
+#define	PM8058_GPIO_BANK_MASK		0x70
+#define	PM8058_GPIO_BANK_SHIFT		4
+#define	PM8058_GPIO_WRITE		0x80
+
+/* Bank 0 */
+#define	PM8058_GPIO_VIN_MASK		0x0E
+#define	PM8058_GPIO_VIN_SHIFT		1
+#define	PM8058_GPIO_MODE_ENABLE		0x01
+
+/* Bank 1 */
+#define	PM8058_GPIO_MODE_MASK		0x0C
+#define	PM8058_GPIO_MODE_SHIFT		2
+#define	PM8058_GPIO_OUT_BUFFER		0x02
+#define	PM8058_GPIO_OUT_INVERT		0x01
+
+#define	PM8058_GPIO_MODE_OFF		3
+#define	PM8058_GPIO_MODE_OUTPUT		2
+#define	PM8058_GPIO_MODE_INPUT		0
+#define	PM8058_GPIO_MODE_BOTH		1
+
+/* Bank 2 */
+#define	PM8058_GPIO_PULL_MASK		0x0E
+#define	PM8058_GPIO_PULL_SHIFT		1
+
+/* Bank 3 */
+#define	PM8058_GPIO_OUT_STRENGTH_MASK   0x0C
+#define	PM8058_GPIO_OUT_STRENGTH_SHIFT  2
+
+/* Bank 4 */
+#define	PM8058_GPIO_FUNC_MASK		0x0E
+#define	PM8058_GPIO_FUNC_SHIFT		1
+
+/* Bank 5 */
+#define	PM8058_GPIO_NON_INT_POL_INV	0x08
+#define PM8058_GPIO_BANKS		6
+
+
+#define PM_IRQ_ID_TO_BLOCK_INDEX(id) (uint8_t)(id / 8)
+#define PM_IRQ_ID_TO_BIT_MASK(id)    (uint8_t)(1 << (id % 8))
+
 #endif
