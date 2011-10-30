@@ -382,7 +382,6 @@ void moboot_init(const struct app_descriptor *app)
 
 	if (gpiokeys_poll(KEY_ALL)) {
 		keys_pressed = 1;
-		printf("\nmoboot 0.3.3g 2011-10-26 21:10\n");
 		printf("\nPlease release key(s)...");
 		while (1) {
 			thread_sleep(20);
@@ -444,37 +443,29 @@ void moboot_init(const struct app_descriptor *app)
 #if 0
 		if (gfx_trans) {
 			gfxconsole_set_colors(0xffffffff, 0x000000ff);
-			printf("moboot 0.3.3g");
-			gfxconsole_setpos(xoff,yoff + 1);
-			printf("=============");
+			printf("moboot 0.3.4");
 			gfxconsole_setpos(xoff,yoff);
 			gfxconsole_set_colors(0x00000000, 0x00000000);
 		} else {
 			gfxconsole_set_colors(0x00000000, 0xffffffff);
-			printf("moboot 0.3.3g");
-			gfxconsole_setpos(xoff,yoff + 1);
-			printf("=============");
+			printf("moboot 0.3.4");
 			gfxconsole_set_colors(0x00000000, 0x000000ff);
 		}
 #else
 		if (gfx_trans) {
 			gfxconsole_set_colors(0xffffffff, 0x00000000);
-			printf("moboot 0.3.3g");
-			gfxconsole_setpos(xoff,yoff + 1);
-			printf("=============");
+			printf("moboot 0.3.4");
 			gfxconsole_setpos(xoff,yoff);
 			gfxconsole_set_colors(0x00000000, 0x00000000);
 		} else {
 			gfxconsole_set_colors(0x00000000, 0xffffffff);
-			printf("moboot 0.3.3g");
-			gfxconsole_setpos(xoff,yoff + 1);
-			printf("=============");
+			printf("moboot 0.3.4");
 			gfxconsole_set_colors(0x00000000, 0x000000ff);
 		}
 #endif
 
 		if (!use_next) {
-			act = moboot_menu(xoff, yoff + 3, entries, default_menu_entry, num_menu_entries, keys_pressed ? 0 : default_timeout);
+			act = moboot_menu(xoff, yoff + 2, entries, default_menu_entry, num_menu_entries, keys_pressed ? 0 : default_timeout);
 		} else {
 			act = next_menu_entry;
 			use_next = 0;
