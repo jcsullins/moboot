@@ -38,6 +38,7 @@
 #include <dev/pm8921.h>
 #include <dev/ssbi.h>
 #include <platform/iomap.h>
+#include <platform/pmic.h>
 #include <lib/ptable.h>
 
 #define LINUX_MACHTYPE_APQ8064_SIM     3572
@@ -62,7 +63,7 @@ void target_init(void)
 {
 	uint32_t base_addr;
 	uint8_t slot;
-	dprintf(INFO, "target_init()\n");
+	dprintf(SPEW, "target_init()\n");
 
 	/* Initialize PMIC driver */
 	pmic.read  = pa1_ssbi2_read_bytes;
@@ -71,11 +72,26 @@ void target_init(void)
 	pm8921_init(&pmic);
 
 	/* Keypad init */
-	keys_init();
-	keypad_init();
+	// keys_init(); // -JCS conflict w/ pm8048 stuff
+	// keypad_init(); // -JCS  conflict as above
+	//
+	struct pm8058_gpio usbhost_gpio_cfg = {
+		.direction = PM_GPIO_DIR_IN,
+		.pull = PM_GPIO_PULL_NO,
+		.vin_sel = PM_GPIO_VIN_S3,	
+		.out_strength = PM_GPIO_STRENGTH_NO,
+		.function = PM_GPIO_FUNC_NORMAL,
+		.inv_int_pol = 0,
+	};
 
-	/* fbcon */
+
 	display_init();
+
+#ifdef IS_TOUCHPAD_3G
+	// 3G VolUp/VolDn
+	pm8058_gpio_config(5, &usbhost_gpio_cfg);
+	pm8058_gpio_config(6, &usbhost_gpio_cfg);
+#endif
 
 	/* Trying Slot 1 first */
 	slot = 1;
@@ -136,10 +152,23 @@ uint32_t board_machtype(void)
 	return mach_id;
 }
 
+static void set_dload_mode(int on)
+{
+	unsigned dload_mode_addr = 0x2A05F000;
+
+	if (dload_mode_addr) {
+		writel(on ? 0xE47B337D : 0, dload_mode_addr);
+		writel(on ? 0xCE14091A : 0,
+		       dload_mode_addr + sizeof(unsigned int));
+		dmb();
+	}
+}
+
 void reboot_device(uint32_t reboot_reason)
 {
 
 	/* TBD - set download mode? */
+	set_dload_mode(0);
 	
 	pm8058_reset_pwr_off(1);
 
