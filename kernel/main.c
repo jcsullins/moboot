@@ -73,7 +73,7 @@ void kmain(void)
 {
 
 // should only be done for early debug output??
-#if DISPLAY_TYPE_TOUCHPAD
+#if DISPLAY_TYPE_TOUCHPAD && 0
 	display_init();
 #endif
 
