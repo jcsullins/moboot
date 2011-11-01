@@ -464,7 +464,7 @@ void moboot_init(const struct app_descriptor *app)
 		}
 #endif
 
-		if (!use_next) {
+		if (!use_next || keys_pressed) {
 			act = moboot_menu(xoff, yoff + 2, entries, default_menu_entry, num_menu_entries, keys_pressed ? 0 : default_timeout);
 		} else {
 			act = next_menu_entry;
