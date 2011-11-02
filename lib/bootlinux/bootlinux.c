@@ -34,10 +34,10 @@
 
 #define RAMDISK_ADDR 0x60000000
 
-char root_dev_ram[] = "/dev/ram";
+char root_dev_ram[] = "/dev/ram0";
 char root_dev_noram[] = "/dev/mmcblk0p13";
-char tty_dev_ram[] = "tty1";
-char tty_dev_noram[] = "ttyS0,115200n8";
+char tty_dev_fbcon[] = "tty1";
+char tty_dev_nofbcon[] = "ttyS0,115200n8";
 char *root_dev;
 char *tty_dev;
 
@@ -160,9 +160,9 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)())
 	}
 
 
-
+#if 1
 	sprintf(cmdline 
-		,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
+		, "root=%s rootwait rw logo.nologo fbcon=rotate:3 console=tty1 %s%s%s%s%s%s"
 		, root_dev
 		, atags_get_cmdline_arg(passed_atags, "fb")
 		, atags_get_cmdline_arg(passed_atags, "nduid")
@@ -171,6 +171,18 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)())
 		, atags_get_cmdline_arg(passed_atags, "boardtype")
 		, atags_get_cmdline_arg(passed_atags, "lastboot")
 		);
+#else
+	sprintf(cmdline 
+		,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 testit=1234%s%s%s%s%s%s"
+		, root_dev
+		, atags_get_cmdline_arg(passed_atags, "fb")
+		, atags_get_cmdline_arg(passed_atags, "nduid")
+		, atags_get_cmdline_arg(passed_atags, "klog")
+		, atags_get_cmdline_arg(passed_atags, "klog_len")
+		, atags_get_cmdline_arg(passed_atags, "boardtype")
+		, atags_get_cmdline_arg(passed_atags, "lastboot")
+		);
+#endif
 
 	printf("cmdline='%s'\n", cmdline);
 

@@ -252,6 +252,8 @@ void moboot_init(const struct app_descriptor *app)
 
 	unsigned xoff, yoff;
 
+	unsigned ramdisk_mounted, ramdisk_start, ramdisk_size;
+
 	unsigned i, j;
 
 	unsigned default_menu_entry = 0;
@@ -271,6 +273,8 @@ void moboot_init(const struct app_descriptor *app)
 	void *tile_ptr;
 	char splash_path[256];
 
+	ssize_t rdmsgsz;
+	char *rdmsg;
 
 	keys_pressed = 0;
 
@@ -285,6 +289,24 @@ void moboot_init(const struct app_descriptor *app)
 		reboot_device(RESTART_REASON_REBOOT);
 	}
 #endif
+
+	gfxconsole_clear();
+	gfxconsole_setpos(0,0);
+
+	ramdisk_mounted = 0;
+	atags_get_ramdisk(&ramdisk_start, &ramdisk_size);
+	if (ramdisk_size && ramdisk_start) {
+		ramdisk_init(ramdisk_start, ramdisk_size);
+		if (fs_mount("/ramdisk", "/dev/ramdisk")) {
+			printf("Ramdisk start=%08x size=%08x\n", ramdisk_start, ramdisk_size);
+			printf("Unable to mount /ramdisk\n");
+			printf("Press SELECT to continue\n");
+			gpiokeys_wait_select();
+		} else {
+			ramdisk_mounted = 1;
+		}
+	}
+
 
     if (fs_mount("/boot", "/dev/mmcblk0p13")) {
 		printf("\nUnable to mount /boot, exiting.\n");
@@ -371,13 +393,40 @@ void moboot_init(const struct app_descriptor *app)
 		i++;
 	}
 	if (rc < 0) {
-		dprintf(SPEW, "DirList ERROR rc = %d\n", rc);
+		dprintf(SPEW, "/boot dirList ERROR rc = %d\n", rc);
+	}
+	i = 0;
+	while ((rc = fs_dirent("/ramdisk/boot", i, &ptr)) > 0) {
+		sprintf(path, "/ramdisk/boot/%s", ptr);
+		if (strncmp("uImage.", ptr, 7) == 0) {
+			if (strncmp("uImage.moboot", ptr, 13) != 0) {
+				newtitle = malloc(strlen(ptr) - 7 + 5 + 1);
+				sprintf(newtitle, "boot %s", ptr + 7);
+				newpath = malloc(strlen(ptr) + 14 + 1);
+				sprintf(newpath, "/ramdisk/boot/%s", ptr);
+				newname = malloc(strlen(ptr) - 7 + 1);
+				sprintf(newname, "%s", ptr + 7);
+				if (strcmp(default_image, ptr + 7) == 0) {
+					default_menu_entry = num_menu_entries;
+				}
+				if (strcmp(next_image, ptr + 7) == 0) {
+					next_menu_entry = num_menu_entries;
+					use_next = 1;
+				}
+				set_menu_entry(newtitle, BOOT_FS, newpath, newname);
+				counted_images++;
+			}
+		}
+		free(ptr);
+		i++;
+	}
+	if (rc < 0) {
+		dprintf(SPEW, "/ramdisk/boot dirList ERROR rc = %d\n", rc);
 	}
 	
 	if (counted_images == 0) {
 		set_menu_entry("boot", BOOT_FS, "/boot/uImage-2.6.35-palm-tenderloin", "default");
 	}
-
 
 
 	if (gpiokeys_poll(KEY_ALL)) {
