@@ -410,7 +410,8 @@ ssize_t fs_load_file_mem(const char *path, void **ptr)
 	struct file_stat stat;
 	fs_stat_file(cookie, &stat);
 
-	*ptr = malloc(stat.size);
+	*ptr = malloc(stat.size + 1);
+	ptr[stat.size] = NULL;
 
 	if (!(*ptr)) return -1;
 
