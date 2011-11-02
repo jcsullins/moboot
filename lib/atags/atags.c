@@ -181,3 +181,31 @@ char * atags_get_cmdline_arg(unsigned *tags_ptr, const char *arg)
 	return retp;
 }
 		
+void atags_get_ramdisk(unsigned *addr, unsigned *length)
+{
+	struct tag *tagp = (void *)passed_atags;
+
+	*addr = 0;
+	*length = 0;
+
+	if (!tagp || tagp->hdr.tag != ATAG_CORE) {
+		return;
+	}
+
+	while (tagp->hdr.size != 0) {
+		if (tagp->hdr.tag == ATAG_INITRD2) {
+			*addr = tagp->u.initrd.start;
+			*length = tagp->u.initrd.size;
+			break;
+		}
+
+		if (tagp->hdr.size < 2048) {
+			tagp = (struct tag*)((unsigned *)tagp + tagp->hdr.size);
+		} else {
+			break;
+		}
+	}
+
+	return;
+}
+		

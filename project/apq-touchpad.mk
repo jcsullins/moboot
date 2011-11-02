@@ -14,6 +14,7 @@ MODULES += lib/fs/ext2
 MODULES += lib/gfx
 MODULES += lib/gfxconsole
 MODULES += lib/tga
+MODULES += lib/ramdisk
 
 DEBUG := 0
 
