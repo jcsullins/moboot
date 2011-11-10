@@ -113,7 +113,9 @@ char * atags_get_cmdline_arg(unsigned *tags_ptr, const char *arg)
 	unsigned start, end;
 	char *retp;
 
-	if (!tags_ptr) return nada;
+	if (!tagp) tagp = passed_atags;
+
+	if (!tagp) return nada;
 	if (!arg) return nada;
 
 	if (tagp->hdr.tag != ATAG_CORE) {

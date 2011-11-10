@@ -30,35 +30,37 @@
 #include <target/gpiokeys.h>
 #include <kernel/thread.h>
 
+extern unsigned board_type_is_3g;
+
 int gpiokeys_poll(unsigned keylist) {
 
 	int keys_result = 0;
 
-#ifndef IS_TOUCHPAD_3G
-	if (keylist & KEY_UP) {
-		if (apq_gpio_get(KEY_UP_GPIO) == 0) {
-			keys_result += KEY_UP;
+	if (!board_type_is_3g) {
+		if (keylist & KEY_UP) {
+			if (apq_gpio_get(KEY_UP_GPIO) == 0) {
+				keys_result += KEY_UP;
+			}
 		}
-	}
 
-	if (keylist & KEY_DOWN) {
-		if (apq_gpio_get(KEY_DOWN_GPIO) == 0) {
-			keys_result += KEY_DOWN;
+		if (keylist & KEY_DOWN) {
+			if (apq_gpio_get(KEY_DOWN_GPIO) == 0) {
+				keys_result += KEY_DOWN;
+			}
 		}
-	}
-#else
-	if (keylist & KEY_UP) {
-		if (!pm8058_gpio_get(5)) {
-			keys_result += KEY_UP;
+	} else {
+		if (keylist & KEY_UP) {
+			if (!pm8058_gpio_get(5)) {
+				keys_result += KEY_UP;
+			}
 		}
-	}
 
-	if (keylist & KEY_DOWN) {
-		if (!pm8058_gpio_get(6)) {
-			keys_result += KEY_DOWN;
+		if (keylist & KEY_DOWN) {
+			if (!pm8058_gpio_get(6)) {
+				keys_result += KEY_DOWN;
+			}
 		}
 	}
-#endif
 
 	if (keylist & KEY_SELECT) {
 		if (apq_gpio_get(KEY_SELECT_GPIO) == 0) {

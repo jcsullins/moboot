@@ -492,23 +492,23 @@ void moboot_init(const struct app_descriptor *app)
 #if 0
 		if (gfx_trans) {
 			gfxconsole_set_colors(0xffffffff, 0x000000ff);
-			printf("moboot 0.3.4");
+			printf("moboot %s", MOBOOT_VERSION);
 			gfxconsole_setpos(xoff,yoff);
 			gfxconsole_set_colors(0x00000000, 0x00000000);
 		} else {
 			gfxconsole_set_colors(0x00000000, 0xffffffff);
-			printf("moboot 0.3.4");
+			printf("moboot %s", MOBOOT_VERSION);
 			gfxconsole_set_colors(0x00000000, 0x000000ff);
 		}
 #else
 		if (gfx_trans) {
 			gfxconsole_set_colors(0xffffffff, 0x00000000);
-			printf("moboot 0.3.4");
+			printf("moboot %s", MOBOOT_VERSION);
 			gfxconsole_setpos(xoff,yoff);
 			gfxconsole_set_colors(0x00000000, 0x00000000);
 		} else {
 			gfxconsole_set_colors(0x00000000, 0xffffffff);
-			printf("moboot 0.3.4");
+			printf("moboot %s", MOBOOT_VERSION);
 			gfxconsole_set_colors(0x00000000, 0x000000ff);
 		}
 #endif

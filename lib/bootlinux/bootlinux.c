@@ -160,9 +160,9 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)())
 	}
 
 
-#if 1
+#if 0
 	sprintf(cmdline 
-		, "root=%s rootwait rw logo.nologo fbcon=rotate:3 console=tty1 %s%s%s%s%s%s"
+		, "root=%s rootwait rw logo.nologo console=tty1 %s%s%s%s%s%s"
 		, root_dev
 		, atags_get_cmdline_arg(passed_atags, "fb")
 		, atags_get_cmdline_arg(passed_atags, "nduid")
@@ -173,7 +173,7 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)())
 		);
 #else
 	sprintf(cmdline 
-		,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 testit=1234%s%s%s%s%s%s"
+		,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
 		, root_dev
 		, atags_get_cmdline_arg(passed_atags, "fb")
 		, atags_get_cmdline_arg(passed_atags, "nduid")

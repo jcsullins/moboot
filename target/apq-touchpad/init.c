@@ -40,6 +40,8 @@
 #include <platform/iomap.h>
 #include <platform/pmic.h>
 #include <lib/ptable.h>
+#include <string.h>
+#include <lib/atags.h>
 
 #define LINUX_MACHTYPE_APQ8064_SIM     3572
 
@@ -59,6 +61,104 @@ static unsigned mmc_sdc_base[] =
 static pm8921_dev_t pmic;
 static const uint8_t uart_gsbi_id  = GSBI_ID_3;
 
+enum topaz_board_types {
+	TOPAZ_PROTO = 0,
+	TOPAZ_PROTO2,
+	TOPAZ_EVT1,
+	TOPAZ_EVT2,
+	TOPAZ_EVT3,
+	TOPAZ_DVT,
+	TOPAZ_PVT,
+	TOPAZ_3G_PROTO,
+	TOPAZ_3G_PROTO2,
+	TOPAZ_3G_EVT1,
+	TOPAZ_3G_EVT2,
+	TOPAZ_3G_EVT3,
+	TOPAZ_3G_EVT4,
+	TOPAZ_3G_DVT,
+	TOPAZ_3G_PVT,
+	TOPAZ_END
+};
+
+static unsigned board_type = TOPAZ_EVT1;
+
+unsigned board_type_is_3g = 0;
+
+static struct {
+	enum topaz_board_types type;
+	const char *str;
+} boardtype_tbl[] = {
+	/* WiFi */
+	{TOPAZ_PROTO,    "topaz-Wifi-proto"},
+	{TOPAZ_PROTO2,   "topaz-Wifi-proto2"},
+	{TOPAZ_EVT1,     "topaz-Wifi-evt1"},
+	{TOPAZ_EVT2,     "topaz-Wifi-evt2"},
+	{TOPAZ_EVT3,     "topaz-Wifi-evt3"},
+	{TOPAZ_DVT,      "topaz-Wifi-dvt"},
+	{TOPAZ_PVT,      "topaz-Wifi-pvt"},
+
+	/* 3G */
+	{TOPAZ_3G_PROTO,    "topaz-3G-proto"},
+	{TOPAZ_3G_PROTO2,   "topaz-3G-proto2"},
+	{TOPAZ_3G_EVT1,     "topaz-3G-evt1"},
+	{TOPAZ_3G_EVT2,     "topaz-3G-evt2"},
+	{TOPAZ_3G_EVT3,     "topaz-3G-evt3"},
+	{TOPAZ_3G_EVT4,     "topaz-3G-evt4"},
+	{TOPAZ_3G_DVT,      "topaz-3G-dvt"},
+	{TOPAZ_3G_PVT,      "topaz-3G-pvt"},
+
+	/* TODO: Non-standard board strings, to be removed once all copies of
+	 * bootie in the wild are updated to use the above format */
+
+	/* WiFi */
+	{TOPAZ_PROTO,    "topaz-1stbuild-Wifi"},
+	{TOPAZ_PROTO2,   "topaz-2ndbuild-Wifi"},
+	{TOPAZ_EVT1,     "topaz-3rdbuild-Wifi"},
+	{TOPAZ_EVT2,     "topaz-4thbuild-Wifi"},
+	{TOPAZ_EVT3,     "topaz-5thbuild-Wifi"},
+	{TOPAZ_DVT,      "topaz-6thbuild-Wifi"},
+	{TOPAZ_PVT,      "topaz-7thbuild-Wifi"},
+	{TOPAZ_PVT,      "topaz-pvt-Wifi"},
+
+	/* 3G */
+	{TOPAZ_3G_PROTO,    "topaz-1stbuild-3G"},
+	{TOPAZ_3G_PROTO2,   "topaz-2ndbuild-3G"},
+	{TOPAZ_3G_EVT1,     "topaz-3rdbuild-3G"},
+	{TOPAZ_3G_EVT2,     "topaz-4thbuild-3G"},
+	{TOPAZ_3G_EVT3,     "topaz-5thbuild-3G"},
+	{TOPAZ_3G_DVT,      "topaz-6thbuild-3G"},
+	{TOPAZ_3G_PVT,      "topaz-7thbuild-3G"},
+	{TOPAZ_3G_PVT,      "topaz-pvt-3G"},
+	{TOPAZ_END,			"invalid"}
+};
+
+
+void boardtype_init()
+{
+	char *boardtype_str;
+	int i;
+
+	boardtype_str = atags_get_cmdline_arg(NULL, "boardtype");
+
+	if (strlen(boardtype_str) < 12) {
+		free(boardtype_str);
+		return;
+	}
+
+	boardtype_str += 11;
+
+	for (i = 0; boardtype_tbl[i].type != TOPAZ_END; i++)
+		if (!strcmp(boardtype_str, boardtype_tbl[i].str))
+			board_type = boardtype_tbl[i].type;
+
+	if (board_type >= TOPAZ_3G_PROTO) {
+		board_type_is_3g = 1;
+	}
+
+	boardtype_str -= 11;
+	free(boardtype_str);
+}
+
 void target_init(void)
 {
 	uint32_t base_addr;
@@ -68,6 +168,8 @@ void target_init(void)
 	/* Initialize PMIC driver */
 	pmic.read  = pa1_ssbi2_read_bytes;
 	pmic.write = pa1_ssbi2_write_bytes;
+
+	boardtype_init();
 
 	pm8921_init(&pmic);
 
@@ -87,11 +189,11 @@ void target_init(void)
 
 	display_init();
 
-#ifdef IS_TOUCHPAD_3G
-	// 3G VolUp/VolDn
-	pm8058_gpio_config(5, &usbhost_gpio_cfg);
-	pm8058_gpio_config(6, &usbhost_gpio_cfg);
-#endif
+	if (board_type_is_3g) {
+		// 3G VolUp/VolDn
+		pm8058_gpio_config(5, &usbhost_gpio_cfg);
+		pm8058_gpio_config(6, &usbhost_gpio_cfg);
+	}
 
 	/* Trying Slot 1 first */
 	slot = 1;
