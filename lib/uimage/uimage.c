@@ -135,7 +135,7 @@ unsigned uimage_valid_dcrc(struct image_header *hdr)
 unsigned uimage_valid_size(struct image_header *hdr, unsigned len)
 {
 	if (ntohl(hdr->ih_size) != len - sizeof(struct image_header)) {
-		dprintf(ALWAYS, "size %u != len %u\n", ntohl(hdr->ih_size), len);
+		/* dprintf(ALWAYS, "size %u != len %u\n", ntohl(hdr->ih_size), len); */
 		return 0;
 	}
 
@@ -217,11 +217,11 @@ unsigned uimage_invalid(void *data, unsigned len)
 	if (!uimage_valid_hcrc(hdr)) {
 		return UIMAGE_INVALID_HCRC;
 	}
-	if (!uimage_valid_dcrc(hdr)) {
-		return UIMAGE_INVALID_DCRC;
-	}
 	if (!uimage_valid_size(hdr, len)) {
 		return UIMAGE_INVALID_SIZE;
+	}
+	if (!uimage_valid_dcrc(hdr)) {
+		return UIMAGE_INVALID_DCRC;
 	}
 	if (hdr->ih_type == IH_TYPE_MULTI) {
 		if (!uimage_valid_multi_sizes(hdr, len)) {
