@@ -148,7 +148,11 @@ int moboot_menu(unsigned x, unsigned y, menu_entry_t **entries, unsigned init, u
 					}
 				}
 				gfxconsole_setpos(x, y + total + 1);
-				gfxconsole_set_colors(0x00000000, 0x000000ff);
+				if (tile_surface) {
+					gfxconsole_set_colors(0x00000000, 0x000000ff);
+				} else {
+					gfxconsole_set_colors(0x00000000, 0x00ff0000);
+				}
 				printf("timeout in %d     ", countdown);
 				if (tile_surface) {
 					gfxconsole_set_colors(0x00000000, 0x00000000);
