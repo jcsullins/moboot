@@ -60,9 +60,6 @@ unsigned gfx_trans;
 #define BOOT_RECOVER 3
 #define BOOT_SHUTDOWN 4
 #define BOOT_DFU 5
-#define BOOT_DIR 6
-#define BOOT_TEST_CONSOLE 7
-#define BOOT_TEST_GPIO 8
 
 void boot_splash()
 {
@@ -122,7 +119,7 @@ int moboot_menu(unsigned x, unsigned y, menu_entry_t **entries, unsigned init, u
 			gfxconsole_setpos(x, y + i);
 			if (i == curpos) {
 				if (tile_surface) {
-					gfxconsole_set_colors(0x00000000, 0x00ff0000);
+					gfxconsole_set_colors(0x00000000, 0x000000ff);
 					printf("%s", entries[i]->title);
 					gfxconsole_set_colors(0x00000000, 0x00000000);
 				} else {
@@ -151,7 +148,7 @@ int moboot_menu(unsigned x, unsigned y, menu_entry_t **entries, unsigned init, u
 					}
 				}
 				gfxconsole_setpos(x, y + total + 1);
-				gfxconsole_set_colors(0x00000000, 0x00ff0000);
+				gfxconsole_set_colors(0x00000000, 0x000000ff);
 				printf("timeout in %d     ", countdown);
 				if (tile_surface) {
 					gfxconsole_set_colors(0x00000000, 0x00000000);
@@ -206,37 +203,6 @@ void set_menu_entry(char *title, unsigned type, char *arg, char *name)
 	entries[num_menu_entries++] = entryp;
 }
 
-void do_test_gpio()
-{
-	unsigned keys;
-	bool hostconnect = true;
-	bool hc;
-
-	gfxconsole_clear();
-	gfxconsole_setpos(0,0);
-
-	while (true) {
-		thread_sleep(10);
-		keys = gpiokeys_poll(KEY_ALL);
-		if (keys) {
-			while (true) {
-				if (!gpiokeys_poll(KEY_ALL)) break;
-			}
-			break;
-		}
-		hc = usbhost_poll();
-		if (hostconnect != hc) {
-			if (!hc) {
-				printf("host connect\n");
-			} else {
-				printf("host disconnect\n");
-			}
-			hostconnect = hc;
-		}
-	}
-
-}
-
 void moboot_init(const struct app_descriptor *app)
 {
 	int rv, keys_pressed;
@@ -283,12 +249,6 @@ void moboot_init(const struct app_descriptor *app)
 	entries = real_entries;
 
 	gfx_trans = 0;
-
-#if 0
-	if (gpiokeys_poll(KEY_ALL) == (KEY_UP|KEY_DOWN)) {
-		reboot_device(RESTART_REASON_REBOOT);
-	}
-#endif
 
 	gfxconsole_clear();
 	gfxconsole_setpos(0,0);
@@ -445,19 +405,11 @@ void moboot_init(const struct app_descriptor *app)
 		gfx_trans = 1;
 	}
 
-#if 0
-	set_menu_entry("Boot webOS", BOOT_FS, "/boot/uImage.webOS");
-	set_menu_entry("Boot Android", BOOT_FS, "/boot/uImage.Android");
-	set_menu_entry("Boot Other", BOOT_FS, "/boot/uImage.Other");
-	set_menu_entry("Boot Other 2", BOOT_FS, "/boot/uImage.Other2");
-#endif
 
 	set_menu_entry("boot webOS Recovery", BOOT_RECOVER, "", "recover");
 	set_menu_entry("reboot", BOOT_REBOOT, "", "reboot");
 	// set_menu_entry("DFU", BOOT_DFU, "", "");
 	set_menu_entry("shutdown", BOOT_SHUTDOWN, "", "shutdown");
-	// set_menu_entry("TEST CONSOLE", BOOT_TEST_CONSOLE, "", "");
-	// set_menu_entry("TEST GPIO", BOOT_TEST_GPIO, "", "");
 
 	xoff = (gfxconsole_getwidth() - 16) / 2;
 	yoff = (gfxconsole_getheight() - 12) / 2;
@@ -489,18 +441,6 @@ void moboot_init(const struct app_descriptor *app)
 		gfxconsole_settrans(gfx_trans);
 
 		gfxconsole_setpos(xoff,yoff);
-#if 0
-		if (gfx_trans) {
-			gfxconsole_set_colors(0xffffffff, 0x000000ff);
-			printf("moboot %s", MOBOOT_VERSION);
-			gfxconsole_setpos(xoff,yoff);
-			gfxconsole_set_colors(0x00000000, 0x00000000);
-		} else {
-			gfxconsole_set_colors(0x00000000, 0xffffffff);
-			printf("moboot %s", MOBOOT_VERSION);
-			gfxconsole_set_colors(0x00000000, 0x000000ff);
-		}
-#else
 		if (gfx_trans) {
 			gfxconsole_set_colors(0xffffffff, 0x00000000);
 			printf("moboot %s", MOBOOT_VERSION);
@@ -511,7 +451,6 @@ void moboot_init(const struct app_descriptor *app)
 			printf("moboot %s", MOBOOT_VERSION);
 			gfxconsole_set_colors(0x00000000, 0x000000ff);
 		}
-#endif
 
 		if (!use_next || keys_pressed) {
 			act = moboot_menu(xoff, yoff + 2, entries, default_menu_entry, num_menu_entries, keys_pressed ? 0 : default_timeout);
@@ -585,51 +524,6 @@ void moboot_init(const struct app_descriptor *app)
 				gfxconsole_set_colors(0x00000000, 0x000000ff);
 				gpiokeys_wait_select();
 				break;
-			case BOOT_DIR:
-			{
-				char *ptr;
-				int rc;
-				unsigned i = 0;
-				char path[256];
-				filecookie fc;
-				struct file_stat fstat;
-				gfxconsole_clear();
-				gfxconsole_setpos(0,0);
-				while ((rc = fs_dirent("/boot", i, &ptr)) > 0) {
-					sprintf(path, "/boot/%s", ptr);
-					fs_open_file(path, &fc);
-					fs_stat_file(fc, &fstat);
-					dprintf(SPEW, "Mode: %06hx ATIME: %08x CTIME: %08x MTIME: %08x NAME: '%s'\n",
-							fstat.mode, fstat.atime, fstat.ctime, fstat.mtime, ptr);
-					fs_close_file(fc);
-					free(ptr);
-					i++;
-				}
-				if (rc < 0) {
-					dprintf(SPEW, "rc = %d\n", rc);
-				}
-				printf("\n\nBOOT FAILED!\n\nPress SELECT to continue\n");
-				gpiokeys_wait_select();
-			break;
-			}
-		case BOOT_TEST_CONSOLE:
-			{
-				unsigned i;
-
-				gfxconsole_clear();
-				gfxconsole_setpos(0,0);
-				for (i = 0; i < 100; i++) {
-					printf("%d -- This is a test ABCDEFGHIJKLMOPQRSTUVWXYZ\n", i);
-				}
-				printf("Press SELECT to continue");
-				gpiokeys_wait_select();
-				break;
-			}
-		case BOOT_TEST_GPIO:
-			{
-				do_test_gpio();
-				break;
-			}
 		}
 	}
 }
