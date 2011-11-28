@@ -35,4 +35,9 @@ extern void bootlinux_atags(void *kernel, unsigned *tags,
 		const char *cmdline, unsigned machtype,
 		void *ramdisk, unsigned ramdisk_size);
 
+enum {
+	BOOTLINUX_NOFLAGS = 0,
+	BOOTLINUX_VERBOSE,
+};
+
 #endif

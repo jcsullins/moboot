@@ -109,7 +109,8 @@ void bootlinux_atags(void *kernel, unsigned *tags,
 	bootlinux_direct(kernel, machtype, (unsigned *)tags);
 }
 
-unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)())
+unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
+		unsigned flags)
 {
 	unsigned kernel_addr, ramdisk_addr;
 	unsigned kernel_size, ramdisk_size;
@@ -160,29 +161,29 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)())
 	}
 
 
-#if 0
-	sprintf(cmdline 
-		, "root=%s rootwait rw logo.nologo console=tty1 %s%s%s%s%s%s"
-		, root_dev
-		, atags_get_cmdline_arg(passed_atags, "fb")
-		, atags_get_cmdline_arg(passed_atags, "nduid")
-		, atags_get_cmdline_arg(passed_atags, "klog")
-		, atags_get_cmdline_arg(passed_atags, "klog_len")
-		, atags_get_cmdline_arg(passed_atags, "boardtype")
-		, atags_get_cmdline_arg(passed_atags, "lastboot")
-		);
-#else
-	sprintf(cmdline 
-		,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
-		, root_dev
-		, atags_get_cmdline_arg(passed_atags, "fb")
-		, atags_get_cmdline_arg(passed_atags, "nduid")
-		, atags_get_cmdline_arg(passed_atags, "klog")
-		, atags_get_cmdline_arg(passed_atags, "klog_len")
-		, atags_get_cmdline_arg(passed_atags, "boardtype")
-		, atags_get_cmdline_arg(passed_atags, "lastboot")
-		);
-#endif
+	if (flags & BOOTLINUX_VERBOSE) {
+		sprintf(cmdline 
+			, "root=%s rootwait rw logo.nologo console=tty1 %s%s%s%s%s%s"
+			, root_dev
+			, atags_get_cmdline_arg(passed_atags, "fb")
+			, atags_get_cmdline_arg(passed_atags, "nduid")
+			, atags_get_cmdline_arg(passed_atags, "klog")
+			, atags_get_cmdline_arg(passed_atags, "klog_len")
+			, atags_get_cmdline_arg(passed_atags, "boardtype")
+			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			);
+	} else {
+		sprintf(cmdline 
+			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
+			, root_dev
+			, atags_get_cmdline_arg(passed_atags, "fb")
+			, atags_get_cmdline_arg(passed_atags, "nduid")
+			, atags_get_cmdline_arg(passed_atags, "klog")
+			, atags_get_cmdline_arg(passed_atags, "klog_len")
+			, atags_get_cmdline_arg(passed_atags, "boardtype")
+			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			);
+	}
 
 	printf("cmdline='%s'\n", cmdline);
 

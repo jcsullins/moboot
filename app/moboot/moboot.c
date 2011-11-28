@@ -36,6 +36,7 @@
 #include <lib/fs.h>
 #include <lib/tga.h>
 #include <lib/gfxconsole.h>
+#include <lib/bootlinux.h>
 
 typedef struct menu_entry
 {
@@ -242,6 +243,8 @@ void moboot_init(const struct app_descriptor *app)
 	ssize_t tile_sz;
 	void *tile_ptr;
 	char splash_path[256];
+
+	unsigned boot_flags;
 
 	ssize_t rdmsgsz;
 	char *rdmsg;
@@ -467,6 +470,7 @@ void moboot_init(const struct app_descriptor *app)
 
 		gfxconsole_setpos(xoff, yoff + 2 + num_menu_entries + 2);
 
+		boot_flags = BOOTLINUX_NOFLAGS;
 
 		switch (entries[act]->type) {
 			case BOOT_RECOVER:
@@ -502,6 +506,22 @@ void moboot_init(const struct app_descriptor *app)
 				} else {
 					printf("OK\n");
 
+					/* check for verbose boot */
+					sprintf(splash_path, "/boot/moboot.verbose.%s", 
+								entries[act]->name);
+
+					splash_sz = fs_load_file_mem(splash_path, &splash_ptr);
+
+					if (splash_sz > 0) {
+						if (strncmp(splash_ptr, "yes", 3) == 0) {
+							boot_flags |= BOOTLINUX_VERBOSE;
+						}
+					}
+
+					if (splash_ptr) free(splash_ptr);
+
+
+					/* check for splash image */
 					sprintf(splash_path, "/boot/moboot.splash.%s.tga", 
 								entries[act]->name);
 
@@ -520,7 +540,9 @@ void moboot_init(const struct app_descriptor *app)
 						}
 					}
 
-					bootlinux_uimage_mem((void *)SCRATCH_ADDR, rv, boot_splash);
+					/* do it to it! */
+					bootlinux_uimage_mem((void *)SCRATCH_ADDR, rv, boot_splash,
+							boot_flags);
 				}
 
 				gfxconsole_set_colors(0x00000000, 0x00ff0000);
