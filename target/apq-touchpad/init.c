@@ -155,6 +155,10 @@ void boardtype_init()
 		board_type_is_3g = 1;
 	}
 
+	if (!strcmp(boardtype_str, "opal-3G-evt3")) {
+		board_type_is_3g = 1;
+	}
+
 	boardtype_str -= 11;
 	free(boardtype_str);
 }
