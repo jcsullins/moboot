@@ -172,7 +172,24 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
 			);
-	} else {
+	}
+	else if (flags & BOOTLINUX_SERCON) {
+		sprintf(cmdline 
+#if 1
+			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyS0,115200n8 %s%s%s%s%s%s"
+#else
+			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyHSL0,115200n8 %s%s%s%s%s%s"
+#endif
+			, root_dev
+			, atags_get_cmdline_arg(passed_atags, "fb")
+			, atags_get_cmdline_arg(passed_atags, "nduid")
+			, atags_get_cmdline_arg(passed_atags, "klog")
+			, atags_get_cmdline_arg(passed_atags, "klog_len")
+			, atags_get_cmdline_arg(passed_atags, "boardtype")
+			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			);
+	}
+	else {
 		sprintf(cmdline 
 			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
 			, root_dev
@@ -190,7 +207,11 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 	printf("\nBooting...\n");
 
 	if (callback) callback();
-	
+
+	if (flags & BOOTLINUX_SERCON) {
+		apq_gpio_set(58, 1);
+	}
+
 #if 1 
 	bootlinux_atags(kernel_ep, (void *)0x40200010,
 		   cmdline, 3079, RAMDISK_ADDR, ramdisk_size);

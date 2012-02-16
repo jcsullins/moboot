@@ -37,7 +37,8 @@ extern void bootlinux_atags(void *kernel, unsigned *tags,
 
 enum {
 	BOOTLINUX_NOFLAGS = 0,
-	BOOTLINUX_VERBOSE,
+	BOOTLINUX_VERBOSE = 1,
+	BOOTLINUX_SERCON = 2,
 };
 
 #endif
