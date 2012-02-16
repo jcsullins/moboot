@@ -40,7 +40,8 @@ extern unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(
 
 enum {
 	BOOTLINUX_NOFLAGS = 0,
-	BOOTLINUX_VERBOSE,
+	BOOTLINUX_VERBOSE = 1,
+	BOOTLINUX_SERCON = 2,
 };
 
 #endif

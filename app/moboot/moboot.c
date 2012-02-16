@@ -526,6 +526,18 @@ void moboot_init(const struct app_descriptor *app)
 						}
 					}
 
+					/* check for sercon boot */
+					sprintf(splash_path, "/boot/moboot.sercon.%s", 
+								entries[act]->name);
+
+					splash_sz = fs_load_file_mem(splash_path, &splash_ptr);
+
+					if (splash_sz > 0) {
+						if (strncmp(splash_ptr, "yes", 3) == 0) {
+							boot_flags |= BOOTLINUX_SERCON;
+						}
+					}
+
 					if (splash_ptr) free(splash_ptr);
 
 					/* check for splash image */
