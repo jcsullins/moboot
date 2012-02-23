@@ -667,12 +667,16 @@ void gfx_draw_pattern_black(void)
 
 	gfx_surface *surface = gfx_create_surface_from_display(&info);
 
+#if 0
 	uint x, y;
 	for (y = 0; y < surface->height; y++) {
 		for (x = 0; x < surface->width; x++) {
 			gfx_putpixel(surface, x, y, 0);
 		}
 	}
+#else
+	gfx_fillrect(surface, 0, 0, surface->width, surface->height, 0);
+#endif
 
 	if (surface->flush)
 		surface->flush(0, surface->height-1);
