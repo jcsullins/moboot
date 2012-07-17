@@ -167,6 +167,7 @@ struct tag {
 extern char * atags_nduid(unsigned *tags_ptr);
 extern char * atags_get_cmdline_arg(unsigned *tags_ptr, const char *arg);
 extern void init_passed_atags(unsigned *tags);
+extern void atags_get_ramdisk(unsigned *addr, unsigned *length);
 
 #endif
 

@@ -88,6 +88,8 @@ void hexdump8(const void *ptr, size_t len);
 #define LTRACE do { if (LOCAL_TRACE) { TRACE; } } while (0)
 #define LTRACEF(x...) do { if (LOCAL_TRACE) { TRACEF(x); } } while (0)
 
+void register_debug_output(void (*fn)(char c));
+
 #if defined(__cplusplus)
 }
 #endif
