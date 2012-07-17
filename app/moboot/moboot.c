@@ -237,7 +237,7 @@ void moboot_init(const struct app_descriptor *app)
 	unsigned counted_images;
 	unsigned use_next;
 	ssize_t splash_sz;
-	void *splash_ptr;
+	void *splash_ptr = NULL;
 	ssize_t background_sz;
 	void *background_ptr;
 	ssize_t tile_sz;
