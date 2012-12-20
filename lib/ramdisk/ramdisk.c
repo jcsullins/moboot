@@ -13,7 +13,7 @@ ssize_t ramdisk_bio_write_block(struct bdev *dev, const void *buf, bnum_t block,
 unsigned char *ramdisk_loc;
 
 
-void ramdisk_init(unsigned loc, unsigned size)
+void ramdisk_init(void *loc, unsigned size)
 {
 
 	ramdisk_loc = (unsigned char *)loc;

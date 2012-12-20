@@ -26,8 +26,14 @@
  * SUCH DAMAGE.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <app.h>
 #include <debug.h>
+#include <platform.h>
+#include <kernel/thread.h>
 #include <target/gpiokeys.h>
 #include <target/restart.h>
 #include <dev/fbcon.h>
@@ -36,6 +42,8 @@
 #include <lib/fs.h>
 #include <lib/tga.h>
 #include <lib/gfxconsole.h>
+#include <lib/atags.h>
+#include <lib/ramdisk.h>
 #include <lib/bootlinux.h>
 
 typedef struct menu_entry
@@ -237,7 +245,7 @@ void moboot_init(const struct app_descriptor *app)
 	unsigned counted_images;
 	unsigned use_next;
 	ssize_t splash_sz;
-	void *splash_ptr;
+	void *splash_ptr = NULL;
 	ssize_t background_sz;
 	void *background_ptr;
 	ssize_t tile_sz;
@@ -263,7 +271,7 @@ void moboot_init(const struct app_descriptor *app)
 	ramdisk_mounted = 0;
 	atags_get_ramdisk(&ramdisk_start, &ramdisk_size);
 	if (ramdisk_size && ramdisk_start) {
-		ramdisk_init(ramdisk_start, ramdisk_size);
+		ramdisk_init((void*)ramdisk_start, ramdisk_size);
 		if (fs_mount("/ramdisk", "/dev/ramdisk")) {
 			printf("Ramdisk start=%08x size=%08x\n", ramdisk_start, ramdisk_size);
 			printf("Unable to mount /ramdisk\n");
@@ -519,7 +527,6 @@ void moboot_init(const struct app_descriptor *app)
 					}
 
 					if (splash_ptr) free(splash_ptr);
-
 
 					/* check for splash image */
 					sprintf(splash_path, "/boot/moboot.splash.%s.tga", 
