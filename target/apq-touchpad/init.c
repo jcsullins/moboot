@@ -50,6 +50,8 @@ extern void mdelay(unsigned msecs);
 extern void keypad_init(void);
 extern void display_init(void);
 
+static unsigned board_mach_type;
+
 static unsigned mmc_sdc_base[] =
 {
 	MSM_SDC1_BASE,
@@ -334,4 +336,14 @@ uint8_t target_uart_gsbi(void)
 unsigned target_baseband()
 {
 	return BASEBAND_APQ;
+}
+
+void set_mach_type(unsigned mtype)
+{
+	board_mach_type = mtype;
+}
+
+unsigned get_mach_type()
+{
+	return board_mach_type;
 }

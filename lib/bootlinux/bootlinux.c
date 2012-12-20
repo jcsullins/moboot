@@ -214,7 +214,7 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 
 #if 1 
 	bootlinux_atags(kernel_ep, (void *)0x40200010,
-		   cmdline, 3079, RAMDISK_ADDR, ramdisk_size);
+		   cmdline, get_mach_type(), RAMDISK_ADDR, ramdisk_size);
 #else
 	bootlinux_atags(kernel_ep, data, cmdline, 3079,
 			RAMDISK_ADDR, ramdisk_size);
