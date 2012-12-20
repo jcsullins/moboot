@@ -50,6 +50,8 @@ extern void mdelay(unsigned msecs);
 extern void keypad_init(void);
 extern void display_init(void);
 
+static unsigned board_mach_type;
+
 static unsigned mmc_sdc_base[] =
 {
 	MSM_SDC1_BASE,
@@ -137,6 +139,43 @@ void boardtype_init()
 {
 	char *boardtype_str;
 	int i;
+	int emu,device0,device1,device2,d0,d1,d2,d3;
+
+#if 0
+	gpio_tlmm_config(79, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(95, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(96, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(97, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(98, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(99, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(100, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+	gpio_tlmm_config(101, 0, -1, GPIO_PULL_DOWN, GPIO_2MA, GPIO_INPUT);
+
+	gpio_direction_input(95);
+	gpio_direction_input(96);
+	gpio_direction_input(101);
+	gpio_direction_input(79);
+	gpio_direction_input(97);
+	gpio_direction_input(98);
+	gpio_direction_input(99);
+	gpio_direction_input(100);
+
+	emu = gpio_get(95);
+	device0 = gpio_get(96);
+	device1 = gpio_get(101);
+	device2 = gpio_get(79);
+	d0 = gpio_get(97);
+	d1 = gpio_get(98);
+	d2 = gpio_get(99);
+	d3 = gpio_get(100);
+
+	dprintf(ALWAYS, "emu=%d product=%d hwbuild=%d sku=%d\n",
+			emu,
+			(device2 << 2) | (device1 << 1) | (device0 << 0),
+			(d2 << 2) | (d1 << 1) | (d0 << 0),
+			d3);
+#endif
+
 
 	boardtype_str = atags_get_cmdline_arg(NULL, "boardtype");
 
@@ -334,4 +373,14 @@ uint8_t target_uart_gsbi(void)
 unsigned target_baseband()
 {
 	return BASEBAND_APQ;
+}
+
+void set_mach_type(unsigned mtype)
+{
+	board_mach_type = mtype;
+}
+
+unsigned get_mach_type()
+{
+	return board_mach_type;
 }

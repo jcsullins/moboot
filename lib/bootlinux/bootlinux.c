@@ -160,6 +160,8 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 		printf("ramdisk @ 0x%08x (%u bytes)\n", RAMDISK_ADDR, ramdisk_size);
 	}
 
+	char *serialno = strchr(atags_get_cmdline_arg(passed_atags, "nduid"), '=');
+	serialno++;
 
 	if (flags & BOOTLINUX_VERBOSE) {
 		sprintf(cmdline 
@@ -191,7 +193,7 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 	}
 	else {
 		sprintf(cmdline 
-			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
+			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
 			, root_dev
 			, atags_get_cmdline_arg(passed_atags, "fb")
 			, atags_get_cmdline_arg(passed_atags, "nduid")
@@ -199,6 +201,7 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			, serialno
 			);
 	}
 
@@ -214,7 +217,7 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 
 #if 1 
 	bootlinux_atags(kernel_ep, (void *)0x40200010,
-		   cmdline, 3079, RAMDISK_ADDR, ramdisk_size);
+		   cmdline, get_mach_type(), RAMDISK_ADDR, ramdisk_size);
 #else
 	bootlinux_atags(kernel_ep, data, cmdline, 3079,
 			RAMDISK_ADDR, ramdisk_size);

@@ -72,6 +72,8 @@ void kmain(void)
 #endif
 {
 
+	set_mach_type(mach_type);
+
 // should only be done for early debug output??
 #if DISPLAY_TYPE_TOUCHPAD && 0
 	display_init();
