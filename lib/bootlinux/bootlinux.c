@@ -43,6 +43,56 @@ char *tty_dev;
 
 extern unsigned *passed_atags;
 
+int hexval(char c)
+{
+	if (c <= '9' && c >= '0') {
+		return (c - '0');
+	}
+	if (c <= 'f' && c >= 'a') {
+		return (c - 'a' + 10);
+	}
+	if (c <= 'F' && c >= 'A') {
+		return (c - 'A' + 10);
+	}
+	return -1;
+}
+
+int nduid2serialno(char *nduid, char *serialno)
+{
+	int nduid_len, i, j, k;
+	char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+	uint32_t val;
+	int hval, l;
+
+	nduid_len = strlen(nduid);
+
+	if (nduid_len != 40) {
+		return -1;
+	}
+
+	for (i = 0, k = 0, j = 0, val = 0; i < nduid_len; i++) {
+		hval = hexval(nduid[i]);
+		if (hval < 0) {
+			return -2;
+		}
+
+		val |= ((unsigned)hval & 0xF) << (k * 4);
+
+		k++;
+
+		if (k == 5) {
+			for (l = 0; l < 4; l++) {
+				serialno[j++] = charset[(val & 0x1F)];
+				val >>= 5;
+			}
+			k = 0;
+			val = 0;
+		}
+	}
+	serialno[j] = '\0';
+	return 0;
+}
+
 void bootlinux_direct(void *kernel, unsigned machtype, unsigned *tags)
 {
 	void (*entry)(unsigned,unsigned,unsigned*) = kernel;
@@ -120,7 +170,9 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 
 	char *cmdline = cmdline_buff;
 
-	char *nduid;
+	char *nduid_in;
+	char serialno_buff[33];
+	char *serialno;
 
 	unsigned rc;
 
@@ -160,10 +212,25 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 		printf("ramdisk @ 0x%08x (%u bytes)\n", RAMDISK_ADDR, ramdisk_size);
 	}
 
+	serialno_buff[0] = '\0';
+
+	nduid_in = strchr(atags_get_cmdline_arg(passed_atags, "nduid"), '=');
+	if (nduid_in[0] == '=') {
+		nduid_in++;
+	} else {
+		nduid_in = "";
+	}
+
+	if (nduid2serialno(nduid_in, serialno_buff) < 0) {
+		// fallback to use nduid as serial if errors converting
+		serialno = nduid_in;
+	} else {
+		serialno = serialno_buff;
+	}
 
 	if (flags & BOOTLINUX_VERBOSE) {
 		sprintf(cmdline 
-			, "root=%s rootwait rw logo.nologo console=tty1 %s%s%s%s%s%s"
+			, "root=%s rootwait rw logo.nologo console=tty1 %s%s%s%s%s%s androidboot.serialno=%s"
 			, root_dev
 			, atags_get_cmdline_arg(passed_atags, "fb")
 			, atags_get_cmdline_arg(passed_atags, "nduid")
@@ -171,14 +238,15 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			, serialno
 			);
 	}
 	else if (flags & BOOTLINUX_SERCON) {
 		sprintf(cmdline 
 #if 1
-			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyS0,115200n8 %s%s%s%s%s%s"
+			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyS0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
 #else
-			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyHSL0,115200n8 %s%s%s%s%s%s"
+			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyHSL0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
 #endif
 			, root_dev
 			, atags_get_cmdline_arg(passed_atags, "fb")
@@ -187,11 +255,12 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			, serialno
 			);
 	}
 	else {
 		sprintf(cmdline 
-			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s"
+			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
 			, root_dev
 			, atags_get_cmdline_arg(passed_atags, "fb")
 			, atags_get_cmdline_arg(passed_atags, "nduid")
@@ -199,6 +268,7 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
+			, serialno
 			);
 	}
 
