@@ -426,8 +426,12 @@ void moboot_init(const struct app_descriptor *app)
 	// set_menu_entry("DFU", BOOT_DFU, "", "");
 	set_menu_entry("shutdown", BOOT_SHUTDOWN, "", "shutdown");
 
-	xoff = (gfxconsole_getwidth() - 12 ) / 2;
-	yoff = (gfxconsole_getheight() - (num_menu_entries + 4)) / 2;
+	xoff = (gfxconsole_getwidth() - 16 ) / 2;
+	if (num_menu_entries < 10) {
+		yoff = (gfxconsole_getheight() - 12) / 2;
+	} else {
+		yoff = (gfxconsole_getheight() - (num_menu_entries + 4)) / 2;
+	}
 
 #if 0
 	tgasz = fs_load_file_mem("/boot/moboot.tga", &tgaptr);
