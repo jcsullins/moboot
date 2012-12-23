@@ -230,45 +230,45 @@ unsigned bootlinux_uimage_mem(void *data, unsigned len, void (*callback)(),
 
 	if (flags & BOOTLINUX_VERBOSE) {
 		sprintf(cmdline 
-			, "root=%s rootwait rw logo.nologo console=tty1 %s%s%s%s%s%s androidboot.serialno=%s"
+			, "root=%s rootwait rw logo.nologo console=tty1 androidboot.serialno=%s %s%s%s%s%s%s"
 			, root_dev
+			, serialno
 			, atags_get_cmdline_arg(passed_atags, "fb")
 			, atags_get_cmdline_arg(passed_atags, "nduid")
 			, atags_get_cmdline_arg(passed_atags, "klog")
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
-			, serialno
 			);
 	}
 	else if (flags & BOOTLINUX_SERCON) {
 		sprintf(cmdline 
 #if 1
-			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyS0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
+			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyS0,115200n8 androidboot.serialno=%s %s%s%s%s%s%s"
 #else
-			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyHSL0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
+			,"root=%s rootwait ro fbcon=disable hs_uart=1 console=ttyHSL0,115200n8 androidboot.serialno=%s %s%s%s%s%s%s"
 #endif
 			, root_dev
+			, serialno
 			, atags_get_cmdline_arg(passed_atags, "fb")
 			, atags_get_cmdline_arg(passed_atags, "nduid")
 			, atags_get_cmdline_arg(passed_atags, "klog")
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
-			, serialno
 			);
 	}
 	else {
 		sprintf(cmdline 
-			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 %s%s%s%s%s%s androidboot.serialno=%s"
+			,"root=%s rootwait ro fbcon=disable console=ttyS0,115200n8 androidboot.serialno=%s %s%s%s%s%s%s"
 			, root_dev
+			, serialno
 			, atags_get_cmdline_arg(passed_atags, "fb")
 			, atags_get_cmdline_arg(passed_atags, "nduid")
 			, atags_get_cmdline_arg(passed_atags, "klog")
 			, atags_get_cmdline_arg(passed_atags, "klog_len")
 			, atags_get_cmdline_arg(passed_atags, "boardtype")
 			, atags_get_cmdline_arg(passed_atags, "lastboot")
-			, serialno
 			);
 	}
 
